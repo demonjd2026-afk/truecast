@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Truecast — Live Match Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070a10; --panel:#0f141e; --panel2:#151c29; --line:#222c3d;
+    --ink:#e7edf5; --muted:#8294ad; --dim:#5b6b84;
+    --home:#0b6cff; --away:#e11d48;
+    --ok:#1fd1a5; --warn:#f5a524; --bad:#ff5b6e;
+    --accent:#7c5cff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--bg);color:var(--ink);
+    font-family:Inter,system-ui,sans-serif;font-size:14px;
+    display:flex;flex-direction:column;height:100vh;overflow:hidden;
+  }
+  .mono{font-variant-numeric:tabular-nums}
+  h1,h2,h3,.disp{font-family:Oswald,sans-serif;font-weight:600;letter-spacing:.02em}
+
+  /* ---- top bar ---- */
+  header{
+    display:flex;align-items:center;gap:18px;padding:10px 18px;
+    background:linear-gradient(180deg,#121a28,#0d131d);border-bottom:1px solid var(--line);
+  }
+  .wordmark{display:flex;align-items:center;gap:10px;font-family:Oswald;font-weight:700;
+    font-size:18px;letter-spacing:.14em;text-transform:uppercase}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--bad);box-shadow:0 0 10px var(--bad);
+    animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .scorebug{display:flex;align-items:center;gap:14px;margin-left:8px}
+  .team{display:flex;align-items:center;gap:8px;font-family:Oswald;font-size:20px;font-weight:600}
+  .chip{width:12px;height:12px;border-radius:3px}
+  .score{font-family:Oswald;font-size:34px;font-weight:700;line-height:1;padding:0 6px}
+  .clock{font-family:Oswald;font-size:17px;color:var(--muted);min-width:64px;text-align:center}
+  .spacer{flex:1}
+  .badge{font-size:11px;text-transform:uppercase;letter-spacing:.08em;padding:4px 9px;border-radius:999px;
+    border:1px solid var(--line);color:var(--muted)}
+  .badge.live{color:var(--ok);border-color:#1fd1a544}
+  .ctrl{display:flex;align-items:center;gap:8px}
+  select,button{font-family:Inter;font-size:13px;color:var(--ink);background:var(--panel2);
+    border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+  button{cursor:pointer}
+  button.primary{background:var(--accent);border-color:transparent;font-weight:600}
+  button.primary:disabled{opacity:.5;cursor:default}
+
+  /* ---- on-air program strip ---- */
+  .program{height:92px;margin:12px 18px 0;border-radius:12px;position:relative;overflow:hidden;
+    background:radial-gradient(120% 140% at 0% 0%,#1a2435,#0c111b);border:1px solid var(--line);
+    display:flex;align-items:center}
+  .program .tag{position:absolute;top:10px;left:14px;font-size:10px;letter-spacing:.14em;
+    color:var(--dim);text-transform:uppercase}
+  .lt{display:flex;align-items:center;gap:0;margin-left:14px;transform:translateY(4px);
+    opacity:0;transition:opacity .3s}
+  .lt.show{opacity:1}
+  .lt .bar{width:6px;align-self:stretch;border-radius:3px;margin:16px 0}
+  .lt .body{padding:6px 16px}
+  .lt .head{font-family:Oswald;font-size:22px;font-weight:700;letter-spacing:.02em}
+  .lt .sub{color:var(--muted);font-size:13px;margin-top:2px;max-width:70ch}
+  .lt .vchip{margin-left:auto;margin-right:16px;font-size:11px;color:var(--ok);
+    border:1px solid #1fd1a544;border-radius:999px;padding:4px 10px;white-space:nowrap}
+
+  /* ---- main grid ---- */
+  main{flex:1;display:grid;grid-template-columns:300px 1fr 320px;gap:12px;padding:12px 18px 16px;
+    min-height:0}
+  .col{background:var(--panel);border:1px solid var(--line);border-radius:12px;display:flex;
+    flex-direction:column;min-height:0}
+  .col h2{margin:0;padding:12px 14px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);border-bottom:1px solid var(--line)}
+  .col .pad{padding:14px;overflow:auto;min-height:0}
+
+  /* momentum */
+  .mom-wrap{margin-bottom:16px}
+  .mom-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-bottom:5px}
+  .mom{height:16px;border-radius:8px;background:var(--panel2);position:relative;overflow:hidden}
+  .mom .fill{position:absolute;top:0;bottom:0;transition:all .6s cubic-bezier(.2,.7,.2,1)}
+  .mom .mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#ffffff33}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .tile{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px}
+  .tile .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+  .tile .v{font-family:Oswald;font-size:22px;font-weight:600;margin-top:3px}
+  .tile .split{display:flex;justify-content:space-between;font-family:Oswald;font-size:18px;margin-top:3px}
+  .barpair{margin-top:14px}
+  .barrow{display:flex;align-items:center;gap:8px;margin:7px 0;font-size:12px}
+  .barrow .lab{width:30px;color:var(--muted);font-family:Oswald}
+  .track{flex:1;height:8px;border-radius:4px;background:var(--panel2);overflow:hidden}
+  .track .f{height:100%;border-radius:4px;transition:width .6s}
+
+  /* feed */
+  .persona-row{display:flex;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center}
+  .ptab{font-size:12px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);
+    background:var(--panel2);color:var(--muted);cursor:pointer}
+  .ptab.on{background:var(--accent);color:#fff;border-color:transparent}
+  .feed{padding:8px 10px;overflow:auto;min-height:0;display:flex;flex-direction:column;gap:8px}
+  .item{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:11px 13px;
+    animation:slidein .35s ease}
+  @keyframes slidein{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  .item.hot{border-color:#7c5cff66;box-shadow:0 0 0 1px #7c5cff33}
+  .item .top{display:flex;align-items:center;gap:9px;margin-bottom:5px}
+  .kind{font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:3px 7px;border-radius:5px;
+    font-weight:600;background:#ffffff14;color:var(--muted)}
+  .kind.goal{background:#1fd1a522;color:#4fe3bf}
+  .kind.big_chance,.kind.shot{background:#7c5cff22;color:#b3a2ff}
+  .kind.save{background:#0b6cff22;color:#6fa8ff}
+  .kind.momentum_shift,.kind.control_spell,.kind.pressure_build{background:#f5a52422;color:#ffc864}
+  .kind.milestone{background:#ffffff14;color:var(--muted)}
+  .item .ck{font-family:Oswald;color:var(--muted);font-size:13px}
+  .item .txt{line-height:1.5}
+  .item .foot{display:flex;align-items:center;gap:10px;margin-top:7px;font-size:11px;color:var(--dim)}
+  .vok{color:var(--ok)}
+  .evbtn{cursor:pointer;color:var(--muted);text-decoration:underline dotted;background:none;border:none;
+    padding:0;font-size:11px}
+  .evlist{margin-top:6px;font-family:ui-monospace,monospace;font-size:11px;color:var(--muted);
+    background:#0a0e16;border:1px solid var(--line);border-radius:7px;padding:7px;display:none}
+
+  /* crew */
+  .crew{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+  .node{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;
+    background:var(--panel2);border:1px solid var(--line);transition:all .25s}
+  .node.active{border-color:#7c5cffaa;background:#171a2e;box-shadow:0 0 14px #7c5cff22}
+  .node .n{font-family:Oswald;font-size:14px}
+  .node .r{margin-left:auto;font-size:11px;color:var(--dim)}
+  .node .led{width:8px;height:8px;border-radius:50%;background:#2c3850}
+  .node.active .led{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .ground{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px}
+  .ground .hl{font-size:12px;color:var(--ink);margin-bottom:9px;display:flex;gap:7px;align-items:center}
+  .gstats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .gstat .n{font-family:Oswald;font-size:24px;font-weight:600}
+  .gstat .l{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+  .gstat.block .n{color:var(--bad)}
+  .gstat.air .n{color:var(--ok)}
+  .shield{color:var(--ok)}
+  footer{padding:7px 18px;border-top:1px solid var(--line);color:var(--dim);font-size:11px;
+    display:flex;gap:16px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="wordmark"><span class="dot" id="livedot"></span>Truecast<span style="font-family:Inter;font-weight:500;font-size:11px;letter-spacing:.03em;text-transform:none;color:var(--muted);margin-left:11px">match intelligence you can prove</span></div>
+  <div class="scorebug">
+    <div class="team"><span class="chip" id="hchip" style="background:var(--home)"></span><span id="hname">—</span></div>
+    <span class="score mono" id="hscore">0</span>
+    <span class="clock mono" id="clock">00:00</span>
+    <span class="score mono" id="ascore">0</span>
+    <div class="team"><span id="aname">—</span><span class="chip" id="achip" style="background:var(--away)"></span></div>
+  </div>
+  <div class="spacer"></div>
+  <span class="badge" id="modebadge">offline</span>
+  <div class="ctrl">
+    <select id="seed" title="Match">
+      <option value="21">Match #21</option>
+      <option value="11">Match #11</option>
+      <option value="42">Match #42</option>
+      <option value="99">Match #99</option>
+      <option value="7">Match #7</option>
+    </select>
+    <select id="speed" title="Replay speed">
+      <option value="40">40×</option>
+      <option value="60" selected>60×</option>
+      <option value="120">120×</option>
+      <option value="0">Max</option>
+    </select>
+    <button class="primary" id="play">► Kick off</button>
+  </div>
+</header>
+
+<div class="program">
+  <span class="tag">On air — overlay preview</span>
+  <div class="lt" id="lt">
+    <div class="bar" id="ltbar"></div>
+    <div class="body">
+      <div class="head" id="lthead">—</div>
+      <div class="sub" id="ltsub"></div>
+    </div>
+    <div class="vchip" id="ltchip">✓ evidence-verified</div>
+  </div>
+</div>
+
+<main>
+  <!-- LEFT: match state -->
+  <section class="col">
+    <h2>Match State</h2>
+    <div class="pad">
+      <div class="mom-wrap">
+        <div class="mom-labels"><span id="momh">HOME</span><span>Momentum</span><span id="moma">AWAY</span></div>
+        <div class="mom"><div class="fill" id="momfill"></div><div class="mid"></div></div>
+      </div>
+      <div class="tiles">
+        <div class="tile"><div class="k">Possession</div><div class="split"><span id="posh">50</span><span id="posa">50</span></div></div>
+        <div class="tile"><div class="k">Expected goals</div><div class="split"><span id="xgh">0.0</span><span id="xga">0.0</span></div></div>
+        <div class="tile"><div class="k">Shots</div><div class="split"><span id="shh">0</span><span id="sha">0</span></div></div>
+        <div class="tile"><div class="k">Tempo / Chaos</div><div class="v mono"><span id="tempo">0</span> <span style="color:var(--dim);font-size:14px">/ <span id="chaos">0.0</span></span></div></div>
+      </div>
+      <div class="barpair">
+        <div class="k" style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:4px">Control of play</div>
+        <div class="barrow"><span class="lab" id="clabh">H</span><div class="track"><div class="f" id="ctrlh" style="background:var(--home);width:50%"></div></div><span class="mono" id="ctrlhv">50%</span></div>
+        <div class="barrow"><span class="lab" id="claba">A</span><div class="track"><div class="f" id="ctrla" style="background:var(--away);width:50%"></div></div><span class="mono" id="ctrlav">50%</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CENTER: feed -->
+  <section class="col">
+    <h2>Broadcast Feed</h2>
+    <div class="persona-row" id="personas">
+      <span class="ptab on" data-k="analyst">Analyst</span>
+      <span class="ptab" data-k="casual">Casual</span>
+      <span class="ptab" data-k="club_home" id="pclubh">Home fan</span>
+      <span class="ptab" data-k="club_away" id="pcluba">Away fan</span>
+      <span style="flex:1"></span>
+      <select id="playerfocus" title="Player focus"><option value="">Player focus: off</option></select>
+    </div>
+    <div class="feed" id="feed"></div>
+  </section>
+
+  <!-- RIGHT: control room -->
+  <section class="col">
+    <h2>Control Room</h2>
+    <div class="pad">
+      <div class="crew" id="crew">
+        <div class="node" data-n="Spotter"><span class="led"></span><span class="n">Spotter</span><span class="r">finds moments</span></div>
+        <div class="node" data-n="Analyst"><span class="led"></span><span class="n">Analyst</span><span class="r">attaches stats</span></div>
+        <div class="node" data-n="Explainer"><span class="led"></span><span class="n">Explainer</span><span class="r">writes the line</span></div>
+        <div class="node" data-n="Verifier"><span class="led"></span><span class="n">Verifier</span><span class="r">checks evidence</span></div>
+        <div class="node" data-n="Personalizer"><span class="led"></span><span class="n">Personalizer</span><span class="r">per audience</span></div>
+        <div class="node" data-n="Director"><span class="led"></span><span class="n">Director</span><span class="r">puts on air</span></div>
+      </div>
+      <div class="ground">
+        <div class="hl"><span class="shield">◆</span> Every line checked against the event log</div>
+        <div class="gstats">
+          <div class="gstat"><div class="n mono" id="gfacts">0</div><div class="l">Moments read</div></div>
+          <div class="gstat air"><div class="n mono" id="gair">0</div><div class="l">Put on air</div></div>
+          <div class="gstat"><div class="n mono" id="grewrite">0</div><div class="l">Rewritten</div></div>
+          <div class="gstat block"><div class="n mono" id="gblock">0</div><div class="l">Blocked</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>Synthetic data · seeded &amp; reproducible</span>
+  <span id="fmode">Narrator: offline</span>
+  <span class="spacer" style="flex:1"></span>
+  <span>Overlay export: <a href="/api/overlays?seed=21" style="color:var(--muted)">/api/overlays</a></span>
+</footer>
+
+<script>
+const $ = s => document.querySelector(s);
+let state = { persona:"analyst", meta:null, items:[], playerFocus:"", es:null };
+
+function setPersona(k){
+  state.persona = k;
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.toggle('on', t.dataset.k===k));
+  renderFeed();
+}
+document.querySelectorAll('.ptab').forEach(t=>t.addEventListener('click',()=>setPersona(t.dataset.k)));
+$('#playerfocus').addEventListener('change', e=>{ state.playerFocus=e.target.value; renderFeed(); });
+
+function personaKey(){
+  if(!state.meta) return "analyst";
+  if(state.persona==="club_home") return "club_"+state.meta.home_id;
+  if(state.persona==="club_away") return "club_"+state.meta.away_id;
+  return state.persona;
+}
+
+function lineFor(item){
+  const k = personaKey();
+  return item.variants[k] || item.variants.analyst || item.text;
+}
+
+function renderFeed(){
+  const feed = $('#feed'); feed.innerHTML="";
+  const pf = state.playerFocus;
+  const items = pf ? state.items.filter(i=>i.player_id===pf) : state.items;
+  for(const item of [...items].reverse()){
+    const el = document.createElement('div');
+    el.className = 'item'+(item.salience>=0.7?' hot':'');
+    const ev = item.evidence.join(', ');
+    el.innerHTML = `
+      <div class="top">
+        <span class="kind ${item.kind}">${item.kind.replace('_',' ')}</span>
+        <span class="ck mono">${item.clock}</span>
+        ${item.context?`<span style="font-size:11px;color:var(--warn)">${item.context}</span>`:''}
+      </div>
+      <div class="txt">${lineFor(item)}</div>
+      <div class="foot">
+        <span class="vok">✓ verified</span>
+        <button class="evbtn">evidence (${item.evidence.length})</button>
+      </div>
+      <div class="evlist">events: ${ev}</div>`;
+    const btn = el.querySelector('.evbtn'), list = el.querySelector('.evlist');
+    btn.addEventListener('click',()=>{ list.style.display = list.style.display==='block'?'none':'block'; });
+    feed.appendChild(el);
+  }
+}
+
+function flashCrew(){
+  const order=["Spotter","Analyst","Explainer","Verifier","Personalizer","Director"];
+  order.forEach((n,i)=>{
+    const node=document.querySelector(`.node[data-n="${n}"]`);
+    setTimeout(()=>{node.classList.add('active'); setTimeout(()=>node.classList.remove('active'),320);}, i*110);
+  });
+}
+
+function showOverlay(item){
+  const lt=$('#lt'), bar=$('#ltbar');
+  const colors={goal:'var(--ok)',save:'var(--home)',big_chance:'var(--accent)',shot:'var(--accent)',
+    momentum_shift:'var(--warn)',control_spell:'var(--warn)',pressure_build:'var(--warn)',milestone:'var(--muted)'};
+  bar.style.background = colors[item.kind]||'var(--accent)';
+  $('#lthead').textContent = item.headline;
+  $('#ltsub').textContent = lineFor(item).replace(/\s*\[.*?\]\s*$/,'');
+  lt.classList.add('show');
+}
+
+function onTick(s){
+  $('#hscore').textContent = s.score[state.meta.home_id];
+  $('#ascore').textContent = s.score[state.meta.away_id];
+  $('#clock').textContent = s.clock;
+  const p=s.possession;
+  $('#posh').textContent=p[state.meta.home_id]; $('#posa').textContent=p[state.meta.away_id];
+  const th=s.teams[state.meta.home_id], ta=s.teams[state.meta.away_id];
+  $('#xgh').textContent=th.xg.toFixed(2); $('#xga').textContent=ta.xg.toFixed(2);
+  $('#shh').textContent=th.shots; $('#sha').textContent=ta.shots;
+  const idx=s.indices;
+  $('#tempo').textContent=idx.tempo; $('#chaos').textContent=idx.chaos.toFixed(2);
+  // momentum: -1 (away) .. +1 (home)
+  const m=idx.momentum; const mid=50, w=Math.abs(m)*50;
+  const fill=$('#momfill');
+  if(m>=0){ fill.style.left=mid+'%'; fill.style.width=w+'%'; fill.style.background='var(--home)'; }
+  else { fill.style.left=(mid-w)+'%'; fill.style.width=w+'%'; fill.style.background='var(--away)'; }
+  const ch=idx.control[state.meta.home_id], ca=idx.control[state.meta.away_id];
+  $('#ctrlh').style.width=Math.round(ch*100)+'%'; $('#ctrlhv').textContent=Math.round(ch*100)+'%';
+  $('#ctrla').style.width=Math.round(ca*100)+'%'; $('#ctrlav').textContent=Math.round(ca*100)+'%';
+  if(s.stats){
+    $('#gfacts').textContent=s.stats.facts_in; $('#gair').textContent=s.stats.aired;
+    $('#grewrite').textContent=s.stats.rewrites; $('#gblock').textContent=s.stats.rejected;
+  }
+}
+
+async function loadMeta(seed){
+  const r=await fetch('/api/meta?seed='+seed); const m=await r.json();
+  $('#hname').textContent=m.home.short_name; $('#aname').textContent=m.away.short_name;
+  $('#hchip').style.background=m.home.color; $('#achip').style.background=m.away.color;
+  $('#momh').textContent=m.home.short_name; $('#moma').textContent=m.away.short_name;
+  $('#clabh').textContent=m.home.short_name; $('#claba').textContent=m.away.short_name;
+  $('#pclubh').textContent=m.home.short_name+' fan'; $('#pcluba').textContent=m.away.short_name+' fan';
+  document.documentElement.style.setProperty('--home',m.home.color);
+  document.documentElement.style.setProperty('--away',m.away.color);
+  $('#modebadge').textContent=m.mode; $('#fmode').textContent='Narrator: '+m.mode;
+  // player focus dropdown
+  const pf=$('#playerfocus'); pf.innerHTML='<option value="">Player focus: off</option>';
+  for(const t of [m.home,m.away]) for(const pl of t.players){
+    const o=document.createElement('option'); o.value=pl.player_id; o.textContent=`${t.short_name} · ${pl.name}`;
+    pf.appendChild(o);
+  }
+  state.meta={home_id:m.home.team_id,away_id:m.away.team_id,home:m.home,away:m.away,mode:m.mode};
+}
+
+function start(){
+  const seed=$('#seed').value, speed=$('#speed').value;
+  if(state.es) state.es.close();
+  state.items=[]; renderFeed(); $('#lt').classList.remove('show');
+  $('#play').disabled=true; $('#play').textContent='● Live';
+  $('#livedot').style.display='inline-block';
+  const es=new EventSource(`/api/stream?seed=${seed}&speed=${speed}`); state.es=es;
+  es.addEventListener('meta',e=>{ const d=JSON.parse(e.data); state.meta={...state.meta,...d}; });
+  es.addEventListener('tick',e=>onTick(JSON.parse(e.data)));
+  es.addEventListener('air',e=>{
+    const item=JSON.parse(e.data); state.items.push(item);
+    flashCrew(); showOverlay(item); renderFeed();
+  });
+  es.addEventListener('done',()=>{ es.close(); $('#play').disabled=false; $('#play').textContent='► Replay';
+    $('#livedot').style.display='none'; });
+  es.onerror=()=>{ es.close(); $('#play').disabled=false; $('#play').textContent='► Kick off';
+    $('#livedot').style.display='none'; };
+}
+
+$('#play').addEventListener('click',start);
+$('#seed').addEventListener('change',()=>loadMeta($('#seed').value));
+loadMeta($('#seed').value);
+</script>
+</body>
+</html>
