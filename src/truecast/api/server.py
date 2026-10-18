@@ -162,6 +162,18 @@ def healthz() -> JSONResponse:
     return JSONResponse({"status": "ok", "narrator": SETTINGS.mode})
 
 
+@app.get("/api/models")
+def models() -> JSONResponse:
+    """Trained-model provenance and held-out metrics (for the UI)."""
+    from ..ml.winprob import get_winprob_model
+    from ..ml.xgmodel import get_xg_model
+    xg, wp = get_xg_model(), get_winprob_model()
+    return JSONResponse({
+        "xg": {"trained": xg.trained, **xg.metrics},
+        "win_prob": {"trained": wp.trained, **wp.metrics},
+    })
+
+
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(os.path.join(_WEB, "index.html"))

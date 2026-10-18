@@ -16,12 +16,16 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+train = ["scikit-learn>=1.3", "numpy>=1.24"]
 
 [project.scripts]
 truecast = "truecast.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"truecast.ml" = ["models/*.json"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

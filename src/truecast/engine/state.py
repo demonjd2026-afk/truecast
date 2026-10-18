@@ -11,8 +11,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from ..models import Event, MatchMeta
+from ..ml.winprob import get_winprob_model
+from ..ml.xgmodel import get_xg_model
 from .indices import IndexEngine
-from .metrics import kmh
+from .metrics import shot_geometry
 
 
 def abs_time(period: int, clock_s: float) -> float:
@@ -70,6 +72,9 @@ class MatchState:
         self._last_abs: float | None = None
         self._possessor: str | None = None
         self.last_event: Event | None = None
+        # Shot map + per-shot model xG (keyed by shot event id).
+        self.shots: list[dict] = []
+        self._shot_xg: dict[str, float] = {}
         # Off-ball running: a steady baseline so players reach realistic
         # season-like distances (~10-11 km) on top of on-ball movement.
         import random as _r
@@ -114,16 +119,34 @@ class MatchState:
             ps.distance_m += ev.detail.get("distance_m", 0.0)
             ps.top_speed_ms = max(ps.top_speed_ms, ev.detail.get("speed_ms", 0.0))
         elif ev.type == "shot" and ts:
+            # Displayed/narrated xG comes from the trained model, estimated from
+            # the shot's features (the generator's own value only drove whether
+            # the goal was scored at generation time).
+            mxg = self._model_xg(ev)
+            ev.detail["xg"] = mxg
+            self._shot_xg[ev.event_id] = mxg
             ts.shots += 1
-            ts.xg = round(ts.xg + ev.detail.get("xg", 0.0), 3)
+            ts.xg = round(ts.xg + mxg, 3)
             if ev.outcome == "on_target":
                 ts.shots_on_target += 1
             if ps:
                 ps.shots += 1
+            self.shots.append({
+                "event_id": ev.event_id, "team": ev.team_id,
+                "x": ev.x, "y": ev.y, "xg": mxg,
+                "on_target": ev.outcome == "on_target", "goal": False,
+            })
         elif ev.type == "goal" and ts:
             ts.goals += 1
             if ps:
                 ps.goals += 1
+            se = ev.detail.get("shot_event")
+            if se in self._shot_xg:
+                ev.detail["xg"] = self._shot_xg[se]
+                for s in self.shots:
+                    if s["event_id"] == se:
+                        s["goal"] = True
+                        break
         elif ev.type == "tackle" and ts and ev.outcome == "won":
             ts.tackles_won += 1
         elif ev.type == "interception" and ts:
@@ -132,6 +155,30 @@ class MatchState:
 
         self.idx.update(ev, now)
         self.last_event = ev
+
+    def _model_xg(self, ev: Event) -> float:
+        dist, angle = shot_geometry(ev.x or 0.0, ev.y or 34.0)
+        d = ev.detail
+        return get_xg_model().predict(
+            dist, angle,
+            is_header=d.get("body_part") == "head",
+            big_chance=bool(d.get("big_chance")),
+            under_pressure=bool(d.get("under_pressure")),
+        )
+
+    def win_prob(self) -> dict:
+        h = self.teams[self.home_id]
+        a = self.teams[self.away_id]
+        poss = self.possession_pct()
+        minute = (self.period - 1) * 45 + self.clock_s / 60.0
+        return get_winprob_model().predict(
+            minute=minute,
+            score_diff=h.goals - a.goals,
+            xg_diff=round(h.xg - a.xg, 3),
+            shots_diff=h.shots - a.shots,
+            momentum=self.idx.momentum(),
+            poss_diff=poss.get(self.home_id, 50) - poss.get(self.away_id, 50),
+        )
 
     # -- read ------------------------------------------------------------
     def score(self) -> tuple[int, int]:
@@ -170,4 +217,6 @@ class MatchState:
                 for tid, t in self.teams.items()
             },
             "indices": self.idx.snapshot(),
+            "win_prob": self.win_prob(),
+            "shots": self.shots,
         }

@@ -145,6 +145,31 @@ and pushes server-sent events: periodic scoreboard/index snapshots, each aired
 line, and the overlay packet behind it. `/healthz` backs the container liveness
 and readiness probes.
 
+## Trained models (`ml/`)
+
+Two scikit-learn models are trained offline on simulated matches (`ml/train.py`)
+and deployed as compact JSON artifacts (`ml/models/*.json`). Runtime inference is
+pure-Python (`ml/winprob.py`, `ml/xgmodel.py`), so the container needs no ML
+dependency and the models load instantly; both fall back to a closed form if an
+artifact is missing.
+
+- **Live win probability** — multinomial logistic over home/draw/away, from
+  features (minute, score diff, xG diff, shots diff, momentum, possession diff)
+  sampled at 5-minute intervals across matches. The simulator has no explicit
+  win-probability function, so the model learns an emergent relationship; held
+  out by match, it reaches ~67% accuracy / 0.71 log-loss. The engine evaluates it
+  every tick and the UI renders it as the win-probability ribbon.
+- **xG** — logistic regression on shot features (distance, angle, header,
+  big-chance, under-pressure). It recovers the generator's conversion function —
+  the same workflow a real xG model uses on event data — at Brier 0.07 / AUC 0.80.
+  The engine uses it for the displayed xG on the shot map and the team totals; the
+  generator keeps its own internal value as the data-generating "ground truth."
+
+`GET /api/models` exposes provenance and metrics, which the UI surfaces in the
+production panel.
+
+Training splits by match, never by row, so no match leaks across train/test.
+
 ## Why multi-agent
 
 A single model prompt could draft commentary, but it could not separate *finding*

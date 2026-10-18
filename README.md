@@ -116,6 +116,7 @@ truecast generate --seed 21    # write raw synthetic match data to data/
 | `GET /api/overlays?seed=21` | full machine-readable overlay timeline (rendering-partner export) |
 | `GET /api/personalize?seed=21&overlay_id=ov0002&mode=club&team_id=KGS` | re-render one moment for a viewer |
 | `GET /api/recap?seed=21` | end-of-match recap |
+| `GET /api/models` | trained-model provenance + held-out metrics |
 | `GET /healthz` | liveness/readiness probe |
 
 ---
@@ -139,17 +140,41 @@ path is [`infra/main.bicep`](infra/main.bicep) (see [`infra/deploy.md`](infra/de
 
 ---
 
+## Trained models
+
+Two scikit-learn models are trained offline on simulated matches and deployed as
+compact JSON artifacts; runtime inference is pure-Python, so the live service
+carries no heavy ML dependency.
+
+| Model | Type | Held-out metrics | Used for |
+|-------|------|------------------|----------|
+| **Live win probability** | multinomial logistic (home / draw / away) | ~67% accuracy, 0.71 log-loss | the win-probability ribbon, updated every tick |
+| **xG** | logistic regression on shot features | Brier 0.07, AUC 0.80 | shot quality on the pitch map and team xG totals |
+
+Train and print metrics with:
+
+```bash
+pip install -e ".[train]"
+python -m truecast.ml.train --matches 400
+```
+
+Trained on synthetic data, so the win-probability model learns an *emergent*
+outcome (the simulator has no explicit win-probability function), while the xG
+model recovers the generator's shot-conversion function — the same logistic-
+regression workflow a real xG model uses on event data. Metrics are reported on
+matches held out from training (split by match, never by row).
+
 ## Tests
 
 ```bash
-pytest          # 33 tests
+pytest          # 38 tests
 ```
 
 Covers the generator (reproducibility, schema, xG geometry), the engine
-(possession, distances, index bounds), the full crew, the API, the Foundry HTTP
-path against a mock endpoint, and — most importantly — the Verifier: that
-grounded lines pass and invented numbers, invented stats, and wrong players are
-all rejected.
+(possession, distances, index bounds), the trained models (loading, calibration,
+monotonicity), the full crew, the API, the Foundry HTTP path against a mock
+endpoint, and — most importantly — the Verifier: that grounded lines pass and
+invented numbers, invented stats, and wrong players are all rejected.
 
 ---
 
@@ -159,10 +184,11 @@ all rejected.
 src/truecast/
   generator/   synthetic match simulator (fictional clubs, seeded events)
   engine/      live state, metrics, explainability indices, moment detection
+  ml/          trained win-probability + xG models (train offline, infer in-process)
   agents/      the six-agent crew + orchestration
   llm/         narrative providers (offline + Azure AI Foundry)
   overlay/     machine-readable overlay packet schema
-  api/         FastAPI server (SSE stream, personalize, export, health)
+  api/         FastAPI server (SSE stream, personalize, export, health, models)
   cli.py       replay / serve / generate / check-foundry
 web/           broadcast UI
 infra/         Bicep for Azure Container Apps + Foundry runbook
