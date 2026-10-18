@@ -378,6 +378,9 @@
 <script>
 const $=s=>document.querySelector(s);
 const NS="http://www.w3.org/2000/svg";
+// Resolve a CSS custom property to a literal color, so SVG presentation
+// attributes get a real value (var() in SVG attributes fails in some browsers).
+function cvar(n){const v=getComputedStyle(document.documentElement).getPropertyValue(n).trim();return v||'#888';}
 let S={persona:"analyst",meta:null,items:[],es:null,win:[],xg:[],pfocus:"",nums:{}};
 
 /* ---------- personas ---------- */
@@ -448,12 +451,23 @@ function drawPitchBase(svg){
 }
 // Deterministic collision relaxation: spreads overlapping shots apart while keeping
 // each near its true location, so no two marks overlap and the frame stays stable.
+// One marker per shooter: aggregate a player's shots to their best chance,
+// sized by total xG, so a squad number never appears twice on the pitch.
+function byShooter(shots){
+  const by={};
+  for(const s of shots){
+    const k=s.player_id||s.event_id;
+    if(!by[k])by[k]={team:s.team,player_id:s.player_id,x:s.x,y:s.y,xg:0,best:-1,goal:false};
+    const g=by[k];g.xg+=s.xg;if(s.xg>g.best){g.best=s.xg;g.x=s.x;g.y=s.y;}if(s.goal)g.goal=true;
+  }
+  return Object.values(by);
+}
 function layoutShots(shots){
   const MINX=5,MAXX=100,MINY=5,MAXY=63,PAD=0.7;
   const nodes=shots.map(s=>{
     const home=s.team===S.meta.home_id;
     const x=home?s.x:105-s.x, y=home?s.y:68-s.y;
-    const r=2.3+1.05*Math.sqrt(Math.max(0.01,s.xg));
+    const r=1.85+0.8*Math.sqrt(Math.max(0.03,s.xg));
     const num=(S.nums&&S.nums[s.player_id]!=null)?String(S.nums[s.player_id]):'';
     return {ox:x,oy:y,x,y,r,home,goal:!!s.goal,num};
   });
@@ -474,9 +488,10 @@ function layoutShots(shots){
 function drawShots(svg,shots){
   drawPitchBase(svg);
   if(!S.meta||!shots||!shots.length)return;
-  const nodes=layoutShots(shots).sort((a,b)=>(a.goal?1:0)-(b.goal?1:0)); // goals on top
+  const nodes=layoutShots(byShooter(shots)).sort((a,b)=>(a.goal?1:0)-(b.goal?1:0)); // goals on top
+  const HC=cvar('--home'),AC=cvar('--away');
   for(const n of nodes){
-    const col=n.home?'var(--home)':'var(--away)';
+    const col=n.home?HC:AC;
     const g=document.createElementNS(NS,'g');
     const c=document.createElementNS(NS,'circle');
     c.setAttribute('cx',n.x);c.setAttribute('cy',n.y);c.setAttribute('r',n.r);
@@ -489,7 +504,7 @@ function drawShots(svg,shots){
       t.setAttribute('x',n.x);t.setAttribute('y',n.y);
       t.setAttribute('text-anchor','middle');t.setAttribute('dominant-baseline','central');
       t.setAttribute('fill','#fff');t.setAttribute('font-family','Inter,system-ui,sans-serif');
-      t.setAttribute('font-weight','700');t.setAttribute('font-size',(n.r*1.08).toFixed(2));
+      t.setAttribute('font-weight','700');t.setAttribute('font-size',(n.r*1.0).toFixed(2));
       t.setAttribute('paint-order','stroke');t.setAttribute('stroke','rgba(3,8,6,.55)');
       t.setAttribute('stroke-width',0.3);t.textContent=n.num;
       g.appendChild(t);
@@ -514,7 +529,7 @@ function drawRace(){
     const last=S.xg[S.xg.length-1];
     return `<path d="${d}" fill="none" stroke="${col}" stroke-width="2"/><circle cx="${px(last.m)}" cy="${py(last[key])}" r="2.6" fill="${col}"/>`;};
   svg.innerHTML=g+`<line class="axis" x1="${pad.l}" y1="${H-pad.b}" x2="${W-pad.r}" y2="${H-pad.b}"/>`
-    +path('h','var(--home)')+path('a','var(--away)');
+    +path('h',cvar('--home'))+path('a',cvar('--away'));
 }
 
 /* ---------- tick ---------- */
