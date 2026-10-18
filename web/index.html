@@ -29,7 +29,10 @@
   .num{font-variant-numeric:tabular-nums}
   .disp{font-family:"Saira Condensed",sans-serif;font-weight:600;letter-spacing:.01em}
   h2{font-family:"Saira Condensed",sans-serif;font-weight:600;font-size:14px;
-    letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin:0}
+    letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin:0;
+    position:relative;padding-left:11px}
+  h2::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);
+    width:3px;height:12px;border-radius:2px;background:var(--signal);opacity:.9}
   button,select{font-family:Inter;color:var(--ink);background:var(--panel2);
     border:1px solid var(--line);border-radius:7px;padding:7px 11px;font-size:13px}
   button{cursor:pointer}
@@ -93,14 +96,16 @@
   main{flex:1;display:grid;grid-template-columns:286px 1fr 408px;gap:11px;padding:11px 14px;
     min-height:0}
   .col{min-height:0;display:flex;flex-direction:column;gap:11px}
-  .panel{background:var(--panel);border:1px solid var(--line-soft);border-radius:11px;min-height:0}
+  .panel{background:var(--panel);border:1px solid var(--line-soft);border-radius:11px;min-height:0;
+    box-shadow:inset 0 1px 0 #ffffff06, 0 10px 28px -22px #000}
   .phead{display:flex;align-items:center;gap:8px;padding:11px 13px 9px}
   .phead .tag{margin-left:auto;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
   .pbody{padding:0 13px 13px}
 
   /* telemetry rail */
   .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:2px}
-  .stat{background:var(--panel2);border:1px solid var(--line-soft);border-radius:9px;padding:9px 10px}
+  .stat{background:linear-gradient(180deg,#18223607,var(--panel2));border:1px solid var(--line-soft);
+    border-radius:9px;padding:9px 10px;box-shadow:inset 0 1px 0 #ffffff07}
   .stat .k{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
   .stat .vrow{display:flex;justify-content:space-between;align-items:baseline;margin-top:4px}
   .stat .v{font-family:"Saira Condensed";font-weight:600;font-size:21px}
@@ -118,8 +123,8 @@
   /* pitch monitor */
   .monitor{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;
     background:radial-gradient(120% 120% at 50% 0%,#12361f 0%,#0b2415 55%,#081c10 100%);
-    flex:0 0 auto}
-  .monitor .scan{position:absolute;inset:0;pointer-events:none;opacity:.14;
+    flex:0 0 auto;box-shadow:inset 0 0 90px rgba(0,0,0,.5)}
+  .monitor .scan{position:absolute;inset:0;pointer-events:none;opacity:.07;
     background:repeating-linear-gradient(0deg,#000 0 1px,transparent 1px 3px)}
   .monitor svg{display:block;width:100%;height:auto}
   .mon-tag{position:absolute;top:9px;left:12px;font-size:10px;letter-spacing:.13em;text-transform:uppercase;
@@ -168,8 +173,9 @@
   .txt{line-height:1.5}
   .foot{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:11px;color:var(--dim)}
   .vok{color:var(--signal)}
-  .evbtn{cursor:pointer;color:var(--muted);text-decoration:underline dotted;background:none;border:none;
-    padding:0;font-size:11px}
+  .evbtn{cursor:pointer;color:var(--muted);background:#ffffff0a;border:1px solid var(--line-soft);
+    border-radius:999px;padding:2px 9px;font-size:10.5px;letter-spacing:.02em}
+  .evbtn:hover{color:var(--ink);border-color:var(--line)}
   .evlist{margin-top:6px;font-size:11px;color:var(--muted);background:#0a0f1b;border:1px solid var(--line-soft);
     border-radius:6px;padding:7px;display:none}
 
@@ -422,35 +428,52 @@ function drawPitchBase(svg){
   const L="#2f6b47", g='stroke="'+L+'" stroke-width="0.4" fill="none"';
   svg.innerHTML=`
    <rect x="0" y="0" width="105" height="68" fill="none"/>
-   <rect x="2" y="2" width="101" height="64" rx="1" ${g}/>
+   <rect x="2" y="2" width="101" height="64" rx="1.2" ${g}/>
    <line x1="52.5" y1="2" x2="52.5" y2="66" ${g}/>
-   <circle cx="52.5" cy="34" r="8.3" ${g}/><circle cx="52.5" cy="34" r="0.5" fill="${L}"/>
+   <circle cx="52.5" cy="34" r="8.3" ${g}/><circle cx="52.5" cy="34" r="0.6" fill="${L}"/>
    <rect x="2" y="14" width="15.5" height="40" ${g}/><rect x="2" y="24.8" width="5.5" height="18.4" ${g}/>
    <rect x="87.5" y="14" width="15.5" height="40" ${g}/><rect x="97.5" y="24.8" width="5.5" height="18.4" ${g}/>
-   <circle cx="11.5" cy="34" r="0.5" fill="${L}"/><circle cx="93.5" cy="34" r="0.5" fill="${L}"/>`;
+   <circle cx="11.5" cy="34" r="0.6" fill="${L}"/><circle cx="93.5" cy="34" r="0.6" fill="${L}"/>
+   <path d="M17.5 28.27 A8.3 8.3 0 0 1 17.5 39.73" ${g}/>
+   <path d="M87.5 28.27 A8.3 8.3 0 0 0 87.5 39.73" ${g}/>`;
 }
-function jitter(id,salt){let h=2166136261;for(const c of (id+salt))h=(h^c.charCodeAt(0))*16777619>>>0;
-  return ((h%1000)/1000-0.5)*2.6;}  // deterministic ±1.3, keeps the frame stable
+// Deterministic collision relaxation: spreads overlapping shots apart while keeping
+// each near its true location, so no two marks overlap and the frame stays stable.
+function layoutShots(shots){
+  const MINX=4.5,MAXX=100.5,MINY=4.5,MAXY=63.5,PAD=0.6;
+  const nodes=shots.map(s=>{
+    const home=s.team===S.meta.home_id;
+    const x=home?s.x:105-s.x, y=home?s.y:68-s.y;
+    const r=0.95+1.6*Math.sqrt(Math.max(0.01,s.xg));
+    return {ox:x,oy:y,x,y,r,home,goal:!!s.goal};
+  });
+  for(let it=0;it<170;it++){
+    for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+      const a=nodes[i],b=nodes[j];let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1e-3;
+      const need=a.r+b.r+PAD;
+      if(d<need){const p=(need-d)/2;dx/=d;dy/=d;a.x-=dx*p;a.y-=dy*p;b.x+=dx*p;b.y+=dy*p;}
+    }
+    for(const n of nodes){
+      n.x+=(n.ox-n.x)*0.015;n.y+=(n.oy-n.y)*0.015;
+      n.x=Math.min(MAXX,Math.max(MINX,n.x));n.y=Math.min(MAXY,Math.max(MINY,n.y));
+    }
+  }
+  return nodes;
+}
 function drawShots(svg,shots){
   drawPitchBase(svg);
-  if(!S.meta)return;
-  // Attempts first, goals on top, so a goal is never buried under a blur of shots.
-  const ordered=[...shots].sort((a,b)=>(a.goal?1:0)-(b.goal?1:0));
-  for(const s of ordered){
-    const home=s.team===S.meta.home_id;
-    let x=home?s.x:105-s.x, y=home?s.y:68-s.y;
-    x+=jitter(s.event_id,'x'); y+=jitter(s.event_id,'y');
-    const r=0.6+1.7*Math.sqrt(Math.max(0.01,s.xg));
-    const col=home?'var(--home)':'var(--away)';
-    let el;
-    if(home){el=document.createElementNS(NS,'circle');el.setAttribute('cx',x);el.setAttribute('cy',y);el.setAttribute('r',r);}
-    else{el=document.createElementNS(NS,'rect');el.setAttribute('x',x-r);el.setAttribute('y',y-r);
-      el.setAttribute('width',r*2);el.setAttribute('height',r*2);el.setAttribute('rx',0.4);
-      el.setAttribute('transform',`rotate(45 ${x} ${y})`);}
+  if(!S.meta||!shots||!shots.length)return;
+  const nodes=layoutShots(shots).sort((a,b)=>(a.goal?1:0)-(b.goal?1:0)); // goals on top
+  for(const n of nodes){
+    const col=n.home?'var(--home)':'var(--away)';let el;
+    if(n.home){el=document.createElementNS(NS,'circle');el.setAttribute('cx',n.x);el.setAttribute('cy',n.y);el.setAttribute('r',n.r);}
+    else{el=document.createElementNS(NS,'rect');el.setAttribute('x',n.x-n.r);el.setAttribute('y',n.y-n.r);
+      el.setAttribute('width',n.r*2);el.setAttribute('height',n.r*2);el.setAttribute('rx',0.5);
+      el.setAttribute('transform',`rotate(45 ${n.x} ${n.y})`);}
     el.setAttribute('fill',col);
-    if(s.goal){el.setAttribute('fill-opacity',0.95);el.setAttribute('stroke','#eafff4');el.setAttribute('stroke-width',0.6);}
-    else{el.setAttribute('fill-opacity',0.11);el.setAttribute('stroke',col);
-      el.setAttribute('stroke-width',0.45);el.setAttribute('stroke-opacity',0.6);}
+    if(n.goal){el.setAttribute('fill-opacity',0.95);el.setAttribute('stroke','#eafff4');el.setAttribute('stroke-width',0.8);}
+    else{el.setAttribute('fill-opacity',0.26);el.setAttribute('stroke',col);
+      el.setAttribute('stroke-width',0.55);el.setAttribute('stroke-opacity',0.95);}
     svg.appendChild(el);
   }
 }
