@@ -12,4 +12,5 @@ RUN pip install --no-cache-dir .
 
 EXPOSE 8000
 ENV PORT=8000
+ENV TRUECAST_WEB_DIR=/app/web
 CMD ["sh", "-c", "uvicorn truecast.api.server:app --host 0.0.0.0 --port ${PORT}"]

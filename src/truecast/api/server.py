@@ -28,8 +28,22 @@ log = logging.getLogger("truecast")
 
 app = FastAPI(title="Truecast", version="1.0")
 
-_WEB = os.path.join(os.path.dirname(__file__), "..", "..", "..", "web")
-_WEB = os.path.abspath(_WEB)
+def _find_web_dir() -> str:
+    """Locate the web/ folder across layouts: editable source tree, an
+    installed package where web/ sits beside the app (container WORKDIR), or an
+    explicit override. Returns the first that exists."""
+    candidates = [
+        os.environ.get("TRUECAST_WEB_DIR"),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "web")),
+        os.path.abspath(os.path.join(os.getcwd(), "web")),
+    ]
+    for c in candidates:
+        if c and os.path.isdir(c):
+            return c
+    return candidates[1]
+
+
+_WEB = _find_web_dir()
 
 DEFAULT_SEED = 21
 MAX_SLEEP = 1.0
