@@ -121,29 +121,33 @@
   .lbl{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin:11px 0 5px}
 
   /* pitch monitor */
-  .monitor{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;
+  .monitor{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;
+    overflow:hidden;background:var(--panel);flex:1 1 auto;min-height:0;
+    box-shadow:inset 0 1px 0 #ffffff06, 0 10px 28px -22px #000}
+  .mon-head{display:flex;align-items:center;gap:12px;padding:10px 13px;
+    border-bottom:1px solid var(--line-soft)}
+  .mon-title{font-family:"Saira Condensed";font-weight:600;font-size:12px;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--muted);position:relative;padding-left:11px}
+  .mon-title::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);
+    width:3px;height:12px;border-radius:2px;background:var(--signal);opacity:.9}
+  .mon-leg{margin-left:auto;display:flex;gap:15px;font-size:11px;color:var(--muted);align-items:center}
+  .mon-leg span{display:flex;align-items:center;gap:5px}
+  .lg-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .lg-ring{width:9px;height:9px;border-radius:50%;border:2px solid #cfe6d7;display:inline-block}
+  .mon-board{position:relative;flex:1;min-height:200px;padding:12px 14px;
     background:radial-gradient(120% 120% at 50% 0%,#12361f 0%,#0b2415 55%,#081c10 100%);
-    flex:0 0 auto;box-shadow:inset 0 0 90px rgba(0,0,0,.5)}
-  .monitor .scan{position:absolute;inset:0;pointer-events:none;opacity:.07;
+    box-shadow:inset 0 0 90px rgba(0,0,0,.5)}
+  .mon-board .scan{position:absolute;inset:0;pointer-events:none;opacity:.06;
     background:repeating-linear-gradient(0deg,#000 0 1px,transparent 1px 3px)}
-  .monitor svg{display:block;width:100%;height:auto}
-  .mon-tag{position:absolute;top:9px;left:12px;font-size:10px;letter-spacing:.13em;text-transform:uppercase;
-    color:#bfe8cf;opacity:.8}
-  .mon-leg{position:absolute;top:9px;right:12px;display:flex;gap:12px;font-size:11px;color:#d7eade}
-  .mon-leg span{display:flex;align-items:center;gap:5px;color:#cfe6d7}
-  .lg-dot{width:9px;height:9px;border-radius:50%;display:inline-block}
-  .lg-dia{width:9px;height:9px;display:inline-block;transform:rotate(45deg)}
-  /* on-air lower third */
-  .lower{position:absolute;left:0;right:0;bottom:0;padding:11px 14px;
-    background:linear-gradient(0deg,rgba(5,10,8,.93),rgba(5,10,8,0));
-    transform:translateY(100%);transition:transform .35s cubic-bezier(.22,.7,.2,1)}
-  .lower.show{transform:translateY(0)}
-  .lower .l-top{display:flex;align-items:center;gap:9px;margin-bottom:3px}
-  .l-kind{font-family:"Saira Condensed";font-weight:600;font-size:12px;letter-spacing:.08em;
-    text-transform:uppercase;padding:2px 8px;border-radius:4px;background:#ffffff1a}
+  .mon-board svg{display:block;width:100%;height:100%}
+  .mon-cap{padding:10px 14px 12px;border-top:1px solid var(--line-soft);min-height:70px}
+  .mon-cap .l-top{display:flex;align-items:center;gap:9px;margin-bottom:5px}
+  .l-kind{font-family:"Saira Condensed";font-weight:600;font-size:11px;letter-spacing:.08em;
+    text-transform:uppercase;padding:2px 9px;border-radius:4px;background:#ffffff14;color:var(--muted)}
   .l-ver{margin-left:auto;font-size:11px;color:var(--signal);display:flex;align-items:center;gap:5px}
-  .l-head{font-family:"Saira Condensed";font-weight:600;font-size:21px}
-  .l-sub{color:#c9d6ea;font-size:13px;margin-top:2px;max-width:92%}
+  .l-head{font-family:"Saira Condensed";font-weight:600;font-size:18px;color:var(--ink)}
+  .l-sub{color:var(--muted);font-size:12.5px;margin-top:3px;line-height:1.45;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
   /* xg race */
   .race{position:relative}
@@ -292,19 +296,24 @@
   <!-- CENTER: program -->
   <section class="col">
     <div class="monitor" id="monitor">
-      <div class="scan"></div>
-      <span class="mon-tag">Program · shot map</span>
-      <div class="mon-leg">
-        <span><span class="lg-dot" id="lgh" style="background:var(--home)"></span><span id="lghn">Home</span></span>
-        <span><span class="lg-dia" id="lga" style="background:var(--away)"></span><span id="lgan">Away</span></span>
-        <span style="color:#bfe8cf">◉ goal · size = xG</span>
+      <div class="mon-head">
+        <span class="mon-title">Program · Shot map</span>
+        <div class="mon-leg">
+          <span><span class="lg-dot" id="lgh" style="background:var(--home)"></span><span id="lghn">Home</span></span>
+          <span><span class="lg-dot" id="lga" style="background:var(--away)"></span><span id="lgan">Away</span></span>
+          <span><span class="lg-ring"></span>goal</span>
+          <span style="color:var(--dim)"># = player · size = xG</span>
+        </div>
       </div>
-      <svg id="pitch" viewBox="0 0 105 68" preserveAspectRatio="xMidYMid meet"></svg>
-      <div class="lower" id="lower">
-        <div class="l-top"><span class="l-kind" id="lkind">—</span><span class="ck num" id="lclock"></span>
+      <div class="mon-board">
+        <div class="scan"></div>
+        <svg id="pitch" viewBox="0 0 105 68" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+      <div class="mon-cap" id="lower">
+        <div class="l-top"><span class="l-kind" id="lkind">Awaiting kickoff</span><span class="ck num" id="lclock"></span>
           <span class="l-ver">◆ evidence-verified</span></div>
-        <div class="l-head" id="lhead">—</div>
-        <div class="l-sub" id="lsub"></div>
+        <div class="l-head" id="lhead">Press ▶ Kick off to begin</div>
+        <div class="l-sub" id="lsub">The latest on-air line and its evidence appear here.</div>
       </div>
     </div>
 
@@ -369,7 +378,7 @@
 <script>
 const $=s=>document.querySelector(s);
 const NS="http://www.w3.org/2000/svg";
-let S={persona:"analyst",meta:null,items:[],es:null,win:[],xg:[],pfocus:""};
+let S={persona:"analyst",meta:null,items:[],es:null,win:[],xg:[],pfocus:"",nums:{}};
 
 /* ---------- personas ---------- */
 document.querySelectorAll('.ptab').forEach(t=>t.addEventListener('click',()=>{
@@ -440,21 +449,23 @@ function drawPitchBase(svg){
 // Deterministic collision relaxation: spreads overlapping shots apart while keeping
 // each near its true location, so no two marks overlap and the frame stays stable.
 function layoutShots(shots){
-  const MINX=4.5,MAXX=100.5,MINY=4.5,MAXY=63.5,PAD=0.6;
+  const MINX=5,MAXX=100,MINY=5,MAXY=63,PAD=0.7;
   const nodes=shots.map(s=>{
     const home=s.team===S.meta.home_id;
     const x=home?s.x:105-s.x, y=home?s.y:68-s.y;
-    const r=0.95+1.6*Math.sqrt(Math.max(0.01,s.xg));
-    return {ox:x,oy:y,x,y,r,home,goal:!!s.goal};
+    const r=2.3+1.05*Math.sqrt(Math.max(0.01,s.xg));
+    const num=(S.nums&&S.nums[s.player_id]!=null)?String(S.nums[s.player_id]):'';
+    return {ox:x,oy:y,x,y,r,home,goal:!!s.goal,num};
   });
-  for(let it=0;it<170;it++){
+  // deterministic collision relaxation — tokens never overlap, stay near true spot
+  for(let it=0;it<190;it++){
     for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
       const a=nodes[i],b=nodes[j];let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1e-3;
       const need=a.r+b.r+PAD;
       if(d<need){const p=(need-d)/2;dx/=d;dy/=d;a.x-=dx*p;a.y-=dy*p;b.x+=dx*p;b.y+=dy*p;}
     }
     for(const n of nodes){
-      n.x+=(n.ox-n.x)*0.015;n.y+=(n.oy-n.y)*0.015;
+      n.x+=(n.ox-n.x)*0.012;n.y+=(n.oy-n.y)*0.012;
       n.x=Math.min(MAXX,Math.max(MINX,n.x));n.y=Math.min(MAXY,Math.max(MINY,n.y));
     }
   }
@@ -465,16 +476,25 @@ function drawShots(svg,shots){
   if(!S.meta||!shots||!shots.length)return;
   const nodes=layoutShots(shots).sort((a,b)=>(a.goal?1:0)-(b.goal?1:0)); // goals on top
   for(const n of nodes){
-    const col=n.home?'var(--home)':'var(--away)';let el;
-    if(n.home){el=document.createElementNS(NS,'circle');el.setAttribute('cx',n.x);el.setAttribute('cy',n.y);el.setAttribute('r',n.r);}
-    else{el=document.createElementNS(NS,'rect');el.setAttribute('x',n.x-n.r);el.setAttribute('y',n.y-n.r);
-      el.setAttribute('width',n.r*2);el.setAttribute('height',n.r*2);el.setAttribute('rx',0.5);
-      el.setAttribute('transform',`rotate(45 ${n.x} ${n.y})`);}
-    el.setAttribute('fill',col);
-    if(n.goal){el.setAttribute('fill-opacity',0.95);el.setAttribute('stroke','#eafff4');el.setAttribute('stroke-width',0.8);}
-    else{el.setAttribute('fill-opacity',0.26);el.setAttribute('stroke',col);
-      el.setAttribute('stroke-width',0.55);el.setAttribute('stroke-opacity',0.95);}
-    svg.appendChild(el);
+    const col=n.home?'var(--home)':'var(--away)';
+    const g=document.createElementNS(NS,'g');
+    const c=document.createElementNS(NS,'circle');
+    c.setAttribute('cx',n.x);c.setAttribute('cy',n.y);c.setAttribute('r',n.r);
+    c.setAttribute('fill',col);c.setAttribute('fill-opacity',n.goal?1:0.9);
+    if(n.goal){c.setAttribute('stroke','#eafff4');c.setAttribute('stroke-width',0.9);}
+    else{c.setAttribute('stroke','rgba(3,8,6,.5)');c.setAttribute('stroke-width',0.4);}
+    g.appendChild(c);
+    if(n.num){
+      const t=document.createElementNS(NS,'text');
+      t.setAttribute('x',n.x);t.setAttribute('y',n.y);
+      t.setAttribute('text-anchor','middle');t.setAttribute('dominant-baseline','central');
+      t.setAttribute('fill','#fff');t.setAttribute('font-family','Inter,system-ui,sans-serif');
+      t.setAttribute('font-weight','700');t.setAttribute('font-size',(n.r*1.08).toFixed(2));
+      t.setAttribute('paint-order','stroke');t.setAttribute('stroke','rgba(3,8,6,.55)');
+      t.setAttribute('stroke-width',0.3);t.textContent=n.num;
+      g.appendChild(t);
+    }
+    svg.appendChild(g);
   }
 }
 
@@ -548,9 +568,12 @@ async function loadMeta(seed){
   $('#rlh').textContent=m.home.short_name;$('#rla').textContent=m.away.short_name;
   $('#fbadge').textContent=m.mode;$('#fbadge').className='fbadge'+(m.mode==='foundry'?' foundry':'');
   $('#fmode').textContent='Narrator: '+m.mode;
+  S.nums={};
   const pf=$('#pfocus');pf.innerHTML='<option value="">Player focus: off</option>';
   for(const t of [m.home,m.away])for(const pl of t.players){
-    const o=document.createElement('option');o.value=pl.player_id;o.textContent=`${t.short_name} · ${pl.name}`;pf.appendChild(o);}
+    S.nums[pl.player_id]=pl.number;
+    const o=document.createElement('option');o.value=pl.player_id;
+    o.textContent=`${t.short_name} · #${pl.number} ${pl.name}`;pf.appendChild(o);}
   S.meta={home_id:m.home.team_id,away_id:m.away.team_id,home:m.home.short_name,away:m.away.short_name,mode:m.mode};
   drawPitchBase($('#pitch'));drawRace();
 }
@@ -563,7 +586,9 @@ async function loadModels(){try{const m=await(await fetch('/api/models')).json()
 function start(){
   const seed=$('#seed').value,speed=$('#speed').value;
   if(S.es)S.es.close();
-  S.items=[];S.win=[];S.xg=[];renderFeed();$('#lower').classList.remove('show');
+  S.items=[];S.win=[];S.xg=[];renderFeed();
+  $('#lkind').textContent='Live';$('#lkind').style.background='';
+  $('#lhead').textContent='Match underway…';$('#lsub').textContent='';$('#lclock').textContent='';
   $('#play').disabled=true;$('#play').textContent='● Live';$('#tally').classList.add('on');
   const es=new EventSource(`/api/stream?seed=${seed}&speed=${speed}`);S.es=es;
   es.addEventListener('meta',e=>{S.meta={...S.meta,...JSON.parse(e.data)};});

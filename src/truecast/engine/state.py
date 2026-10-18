@@ -132,7 +132,7 @@ class MatchState:
             if ps:
                 ps.shots += 1
             self.shots.append({
-                "event_id": ev.event_id, "team": ev.team_id,
+                "event_id": ev.event_id, "team": ev.team_id, "player_id": ev.player_id,
                 "x": ev.x, "y": ev.y, "xg": mxg,
                 "on_target": ev.outcome == "on_target", "goal": False,
             })
