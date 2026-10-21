@@ -254,10 +254,9 @@
       </div>
       <div class="ribbon">
         <div class="seg home" id="segh" style="width:40%"></div>
-        <div class="seg draw" id="segd" style="width:20%"></div>
+        <div class="seg draw" id="segd" style="width:20%"><span class="lab d num" id="ld">draw 20%</span></div>
         <div class="seg away" id="sega" style="width:40%"></div>
         <span class="lab h num" id="lh">40%</span>
-        <span class="lab d num" id="ld">20%</span>
         <span class="lab a num" id="la">40%</span>
       </div>
     </div>
@@ -273,11 +272,13 @@
   <section class="col">
     <div class="panel" style="flex:1;overflow:auto">
       <div class="phead"><h2>Telemetry</h2><span class="tag" id="tmode">live</span></div>
-      <div class="pbody">
+      <div class="pbody" style="display:flex;flex-direction:column;justify-content:space-between;min-height:calc(100% - 44px)">
+        <div>
         <div class="lbl">Possession</div>
         <div class="splitbar"><div class="h" id="posh" style="width:50%"></div><div class="a" id="posa" style="width:50%"></div></div>
         <div style="display:flex;justify-content:space-between;font-family:'Saira Condensed';font-size:15px;margin-top:4px">
           <span id="poshv">50</span><span id="posav">50</span></div>
+        </div>
 
         <div class="tgrid">
           <div class="stat"><div class="k">Expected goals</div><div class="vrow"><span class="v num" id="xgh">0.0</span><span class="v num" id="xga">0.0</span></div></div>
@@ -286,16 +287,22 @@
           <div class="stat"><div class="k">Chaos index</div><div class="vrow"><span class="v num" id="chaos">0.00</span></div></div>
         </div>
 
+        <div>
         <div class="lbl" style="display:flex;justify-content:space-between"><span id="momh">HOME</span><span>Momentum</span><span id="moma">AWAY</span></div>
         <div class="mom"><div class="fill" id="momfill"></div><div class="mid"></div></div>
+        </div>
 
-        <div class="lbl">Control of play</div>
+        <div>
+        <div class="lbl">Control of play <span style="color:var(--dim);text-transform:none;letter-spacing:0">· % of own play controlled</span></div>
         <div class="barline"><span class="lab" id="clh">H</span><div class="track"><div class="f" id="ctrlh" style="width:50%;background:var(--home)"></div></div><span class="num" id="ctrlhv">50%</span></div>
         <div class="barline"><span class="lab" id="cla">A</span><div class="track"><div class="f" id="ctrla" style="width:50%;background:var(--away)"></div></div><span class="num" id="ctrlav">50%</span></div>
+        </div>
 
+        <div>
         <div class="lbl">Defensive pressure /min</div>
         <div class="barline"><span class="lab" id="prh">H</span><div class="track"><div class="f" id="presh" style="width:0%;background:var(--amber)"></div></div><span class="num" id="preshv">0.0</span></div>
         <div class="barline"><span class="lab" id="pra">A</span><div class="track"><div class="f" id="presa" style="width:0%;background:var(--amber)"></div></div><span class="num" id="presav">0.0</span></div>
+        </div>
       </div>
     </div>
   </section>
@@ -576,7 +583,7 @@ function onTick(d){
   // win prob
   if(d.win_prob){const wp=d.win_prob,hp=Math.round(wp.home*100),dp=Math.round(wp.draw*100),ap=Math.round(wp.away*100);
     $('#segh').style.width=hp+'%';$('#segd').style.width=dp+'%';$('#sega').style.width=ap+'%';
-    $('#lh').textContent=hp+'%';$('#ld').textContent=dp+'%';$('#la').textContent=ap+'%';
+    $('#lh').textContent=hp+'%';$('#ld').textContent='draw '+dp+'%';$('#ld').style.display=dp<9?'none':'';$('#la').textContent=ap+'%';
     const lead=hp>=ap?S.meta.home:S.meta.away,lv=Math.max(hp,ap);
     $('#wptop').textContent=lead+' '+lv+'%';
     S.win.push(wp);}
