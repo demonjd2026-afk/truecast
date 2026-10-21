@@ -333,6 +333,7 @@
 
     <div class="panel race">
       <div class="phead"><h2>xG race</h2>
+        <span style="font-size:11px;color:var(--dim);margin-left:2px">cumulative expected goals · the higher line is creating the better chances</span>
         <span class="rleg"><span><i style="background:var(--home)"></i><span id="rlh">H</span></span>
         <span><i style="background:var(--away)"></i><span id="rla">A</span></span></span></div>
       <div class="pbody"><svg id="xgrace"></svg></div>
@@ -374,8 +375,8 @@
         </div>
         <div class="models" id="models">
           <div class="shield" style="margin:10px 0 4px">◆ Trained models</div>
-          <div class="mrow"><span>xG · logistic</span><span><b id="mxgauc">—</b> AUC</span></div>
-          <div class="mrow"><span>Win prob · multinomial</span><span><b id="mwpacc">—</b> acc</span></div>
+          <div class="mrow"><span>Shot quality (xG) · held-out</span><span><b id="mxgauc">—</b> AUC</span></div>
+          <div class="mrow"><span>Win prob · 3-way (H/D/A) · held-out</span><span><b id="mwpacc">—</b> acc</span></div>
         </div>
       </div>
     </div>
