@@ -12,6 +12,9 @@ import asyncio
 import json
 import logging
 import os
+import threading
+from collections import OrderedDict
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
@@ -26,7 +29,16 @@ from ..personas import club_persona, default_personas, player_persona
 
 log = logging.getLogger("truecast")
 
-app = FastAPI(title="Truecast", version="1.0")
+
+@asynccontextmanager
+async def _lifespan(_: FastAPI):
+    # Pre-warm the default seed's full replay off the event loop so the batch
+    # endpoints respond instantly once the app is up (see _replayed below).
+    threading.Thread(target=lambda: _replayed(DEFAULT_SEED), daemon=True).start()
+    yield
+
+
+app = FastAPI(title="Truecast", version="1.0", lifespan=_lifespan)
 
 def _find_web_dir() -> str:
     """Locate the web/ folder across layouts: editable source tree, an
@@ -57,6 +69,32 @@ def _build(seed: int) -> tuple[Truecast, list]:
         club_persona(meta, meta.away.team_id),
     ]
     return Truecast(meta, personas=personas), events
+
+
+# Batch endpoints (/api/overlays, /api/recap, /api/personalize) replay a whole
+# match through the crew. In foundry mode that is dozens of sequential model
+# calls, so a replay is computed once per seed and reused. The cache holds a
+# handful of seeds; the default seed is pre-warmed in the background at startup
+# so the first click on the overlay export never waits for a full replay.
+_REPLAY_CACHE: "OrderedDict[int, Truecast]" = OrderedDict()
+_REPLAY_LOCK = threading.Lock()
+_REPLAY_CACHE_MAX = 8
+
+
+def _replayed(seed: int) -> Truecast:
+    """A crew that has already ingested every event of the match for *seed*."""
+    with _REPLAY_LOCK:
+        cr = _REPLAY_CACHE.get(seed)
+        if cr is not None:
+            _REPLAY_CACHE.move_to_end(seed)
+            return cr
+        cr, events = _build(seed)
+        for ev in events:
+            cr.ingest(ev)
+        _REPLAY_CACHE[seed] = cr
+        while len(_REPLAY_CACHE) > _REPLAY_CACHE_MAX:
+            _REPLAY_CACHE.popitem(last=False)
+        return cr
 
 
 @app.get("/api/meta")
@@ -107,18 +145,14 @@ async def stream(seed: int = DEFAULT_SEED, speed: float = 40.0):
 
 @app.get("/api/recap")
 def recap(seed: int = DEFAULT_SEED) -> JSONResponse:
-    cr, events = _build(seed)
-    for ev in events:
-        cr.ingest(ev)
+    cr = _replayed(seed)
     return JSONResponse(cr.recap(max_items=10))
 
 
 @app.get("/api/overlays")
 def overlays(seed: int = DEFAULT_SEED) -> JSONResponse:
     """Full machine-readable overlay timeline for a rendering partner."""
-    cr, events = _build(seed)
-    for ev in events:
-        cr.ingest(ev)
+    cr = _replayed(seed)
     return JSONResponse({"match_id": cr.bb.meta.match_id, "overlays": cr.bb.overlays})
 
 
@@ -126,9 +160,7 @@ def overlays(seed: int = DEFAULT_SEED) -> JSONResponse:
 def personalize(seed: int = DEFAULT_SEED, overlay_id: str = "", mode: str = "club",
                 team_id: str = "", player_id: str = "") -> JSONResponse:
     """Re-render one aired moment for a club- or player-focused viewer."""
-    cr, events = _build(seed)
-    for ev in events:
-        cr.ingest(ev)
+    cr = _replayed(seed)
     overlay = next((o for o in cr.bb.overlays if o["overlay_id"] == overlay_id), None)
     if overlay is None:
         return JSONResponse({"error": "overlay not found"}, status_code=404)

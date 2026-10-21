@@ -3,7 +3,7 @@
 <p align="center">
   <img alt="Python 3.11+" src="https://img.shields.io/badge/python-3.11%2B-blue">
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-33%20passing-brightgreen">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-38%20passing-brightgreen">
 </p>
 
 Truecast turns a stream of synthetic football events into broadcast-ready match
