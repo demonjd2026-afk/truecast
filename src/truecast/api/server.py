@@ -32,9 +32,18 @@ log = logging.getLogger("truecast")
 
 @asynccontextmanager
 async def _lifespan(_: FastAPI):
-    # Pre-warm the default seed's full replay off the event loop so the batch
-    # endpoints respond instantly once the app is up (see _replayed below).
-    threading.Thread(target=lambda: _replayed(DEFAULT_SEED), daemon=True).start()
+    # Pre-warm every featured seed's full replay off the event loop, default
+    # seed first, so the batch endpoints respond instantly once the app is up
+    # (see _replayed below). Sequential on one thread: in foundry mode a
+    # replay is a long run of model calls, and warming serially keeps the
+    # narrator traffic flat instead of bursting.
+    def warm() -> None:
+        for seed in FEATURED_SEEDS:
+            try:
+                _replayed(seed)
+            except Exception:  # pragma: no cover - warmup must never crash the app
+                log.exception("pre-warm failed for seed %s", seed)
+    threading.Thread(target=warm, daemon=True).start()
     yield
 
 
@@ -58,6 +67,8 @@ def _find_web_dir() -> str:
 _WEB = _find_web_dir()
 
 DEFAULT_SEED = 21
+# The matches offered in the UI picker; all are pre-warmed at startup.
+FEATURED_SEEDS = (21, 11, 42, 99, 7)
 MAX_SLEEP = 1.0
 
 
