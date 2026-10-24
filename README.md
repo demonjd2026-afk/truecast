@@ -18,23 +18,38 @@ before it airs. Nothing reaches the screen that the data cannot back.
 > Hackathon*. All match data is synthetic; no real match data or club
 > trademarks are used.
 
-**Live demo:** <https://truecast.proudplant-2d596e2b.eastus2.azurecontainerapps.io>
+**Live app:** <https://truecast.proudplant-2d596e2b.eastus2.azurecontainerapps.io>
+· **Demo video:** [docs/truecast-demo.mp4](docs/truecast-demo.mp4) (2 min)
 · **Docs:** [Architecture](ARCHITECTURE.md) · [Pitch](PITCH.md) · [Azure setup](AZURE_SETUP.md)
+
+---
+
+## Demo video
+
+<p align="center">
+  <a href="docs/truecast-demo.mp4"><img src="docs/demo-thumb.png" alt="Truecast demo video: a goal airs, the evidence behind it is opened, the six-agent crew and the Verifier counters, Azure AI Foundry and Container Apps" width="100%"></a>
+</p>
+
+Two minutes, recorded against the live Azure deployment with the Foundry
+narrator on: a goal airs, the evidence behind it is opened, the same moment is
+retold for three audiences, the six agents and the Verifier's counters, the
+trained models, and the machine-readable overlay packets.
 
 ---
 
 ## Contents
 
-1. [The idea in one moment](#the-idea-in-one-moment)
-2. [How it works](#how-it-works)
-3. [The Verifier](#the-verifier)
-4. [Try it in two minutes](#try-it-in-two-minutes)
-5. [What you will see](#what-you-will-see)
-6. [Azure](#azure)
-7. [Trained models](#trained-models)
-8. [HTTP API](#http-api)
-9. [Tests](#tests)
-10. [Repository map](#repository-map)
+1. [Demo video](#demo-video)
+2. [The idea in one moment](#the-idea-in-one-moment)
+3. [How it works](#how-it-works)
+4. [The Verifier](#the-verifier)
+5. [Try it in two minutes](#try-it-in-two-minutes)
+6. [What you will see](#what-you-will-see)
+7. [Azure](#azure)
+8. [Trained models](#trained-models)
+9. [HTTP API](#http-api)
+10. [Tests](#tests)
+11. [Repository map](#repository-map)
 
 ---
 
@@ -250,7 +265,7 @@ src/truecast/
   cli.py       serve / replay / generate / check-foundry
 web/           broadcast UI (single HTML file)
 infra/         Bicep for Azure Container Apps, Foundry runbook, deploy notes
-docs/          architecture diagram (source + render), banner
+docs/          demo video + thumbnail, architecture diagram (source + render), banner
 tests/         pytest suite
 ```
 

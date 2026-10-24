@@ -50,6 +50,12 @@ Verifier→Explainer rewrite path for failure recovery.
 - Data innovation: a seeded, reproducible synthetic match generator.
 - Personalization: analyst, casual, club, and player-focus experiences from one feed.
 
+## Demo
+
+- Live app: <https://truecast.proudplant-2d596e2b.eastus2.azurecontainerapps.io>
+- Video (2 min): [`docs/truecast-demo.mp4`](docs/truecast-demo.mp4)
+- Code: <https://github.com/demonjd2026-afk/truecast>
+
 ## Status
 
 Fully working end-to-end offline; Foundry-ready; 39 tests green, including tests
