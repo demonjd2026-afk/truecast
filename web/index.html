@@ -406,7 +406,7 @@ function cvar(n){const v=getComputedStyle(document.documentElement).getPropertyV
 function teamCol(tid){if(tid&&S.meta&&S.colors){if(tid===S.meta.home_id)return S.colors.home;if(tid===S.meta.away_id)return S.colors.away;}return null;}
 function paintSubject(text,name,tid){const col=teamCol(tid);if(!col||!name||!text||!text.includes(name))return null;
   return text.split(name).join(`<span style="color:${col};font-weight:600">${name}</span>`);}
-let S={persona:"analyst",meta:null,items:[],es:null,win:[],xg:[],pfocus:"",nums:{}};
+let S={persona:"analyst",meta:null,items:[],es:null,win:[],xg:[],pfocus:"",nums:{},evOpen:new Set()};
 
 /* ---------- personas ---------- */
 document.querySelectorAll('.ptab').forEach(t=>t.addEventListener('click',()=>{
@@ -454,7 +454,11 @@ function renderFeed(){
       <button class="evbtn">evidence (${it.evidence.length})</button></div>
       <div class="evlist">${evidenceHTML(it)}</div>`;
     const b=el.querySelector('.evbtn'),l=el.querySelector('.evlist');
-    b.onclick=()=>{l.style.display=l.style.display==='block'?'none':'block';};
+    // Expanded evidence stays open across feed re-renders (new lines arrive
+    // every few seconds), keyed by overlay id.
+    if(S.evOpen.has(it.overlay_id))l.style.display='block';
+    b.onclick=()=>{const open=l.style.display==='block';l.style.display=open?'none':'block';
+      if(open)S.evOpen.delete(it.overlay_id);else S.evOpen.add(it.overlay_id);};
     f.appendChild(el);
   }
 }
@@ -658,7 +662,7 @@ async function loadModels(){try{const m=await(await fetch('/api/models')).json()
 function start(){
   const seed=$('#seed').value,speed=$('#speed').value;
   if(S.es)S.es.close();
-  S.items=[];S.win=[];S.xg=[];renderFeed();
+  S.items=[];S.win=[];S.xg=[];S.evOpen.clear();renderFeed();
   $('#lkind').textContent='Live';$('#lkind').style.background='';
   $('#lhead').textContent='Match underway…';$('#lsub').textContent='';$('#lclock').textContent='';
   $('#play').disabled=true;$('#play').textContent='● Live';$('#tally').classList.add('on');
