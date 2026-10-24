@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-label="Truecast - match intelligence you can prove">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1220"/>
+      <stop offset="1" stop-color="#132A3A"/>
+    </linearGradient>
+    <linearGradient id="pitch" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2ECC71" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#2ECC71" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#2ECC71" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="300" rx="18" fill="url(#bg)"/>
+  <!-- faint pitch lines -->
+  <g stroke="#2ECC71" stroke-opacity="0.12" stroke-width="2" fill="none">
+    <rect x="840" y="40" width="320" height="220" rx="4"/>
+    <line x1="1000" y1="40" x2="1000" y2="260"/>
+    <circle cx="1000" cy="150" r="42"/>
+    <rect x="840" y="95" width="70" height="110"/>
+    <rect x="1090" y="95" width="70" height="110"/>
+  </g>
+  <!-- wordmark -->
+  <text x="70" y="128" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="78" font-weight="800" letter-spacing="6" fill="#FFFFFF">TRUECAST</text>
+  <rect x="72" y="146" width="560" height="4" fill="url(#pitch)"/>
+  <text x="72" y="190" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="28" fill="#CFE3F3">Match intelligence you can prove.</text>
+  <!-- pills -->
+  <g font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="15" font-weight="600">
+    <rect x="72" y="218" width="178" height="34" rx="17" fill="#1F8A4C"/>
+    <text x="161" y="240" text-anchor="middle" fill="#FFFFFF">Verified before it airs</text>
+    <rect x="262" y="218" width="150" height="34" rx="17" fill="#2F80ED" fill-opacity="0.25" stroke="#2F80ED"/>
+    <text x="337" y="240" text-anchor="middle" fill="#9CC8FF">Azure AI Foundry</text>
+    <rect x="424" y="218" width="182" height="34" rx="17" fill="#2F80ED" fill-opacity="0.25" stroke="#2F80ED"/>
+    <text x="515" y="240" text-anchor="middle" fill="#9CC8FF">Azure Container Apps</text>
+    <rect x="618" y="218" width="160" height="34" rx="17" fill="#8E5AE8" fill-opacity="0.25" stroke="#8E5AE8"/>
+    <text x="698" y="240" text-anchor="middle" fill="#D4BFFF">Six-agent crew</text>
+  </g>
+  <text x="1130" y="282" text-anchor="end" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="13" fill="#7FA3BD">Microsoft x Premier League - Inside the Game Developer Hackathon</text>
+</svg>

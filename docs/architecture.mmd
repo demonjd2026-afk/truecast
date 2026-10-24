@@ -1,0 +1,64 @@
+flowchart LR
+    subgraph IN["1  INGEST"]
+        direction TB
+        GEN["Synthetic match generator<br/>fictional clubs, seeded,<br/>reproducible"]
+        EV["Event stream<br/>pass, carry, shot, goal,<br/>tackle, pressure"]
+        GEN --> EV
+    end
+
+    subgraph ENG["2  INTERPRET"]
+        direction TB
+        ST["Live match state<br/>score, possession,<br/>shots, distances"]
+        IDX["Explainability indices<br/>momentum, control vs chaos,<br/>pressure, tempo"]
+        ML["Trained models<br/>xG per shot<br/>3-way win probability"]
+        DET["Moment detector<br/>emits a FACT with the<br/>event IDs behind it"]
+        ST --> IDX --> DET
+        ST --> ML --> DET
+    end
+
+    subgraph CREW["3  EXPLAIN  -  six agents, one shared blackboard"]
+        direction TB
+        SP["Spotter<br/>worth airing?"]
+        AN["Analyst<br/>attaches exact numbers"]
+        EX["Explainer<br/>writes the line"]
+        VF{"VERIFIER<br/>every number and name<br/>traceable to the<br/>cited events?"}
+        PZ["Personalizer<br/>analyst, casual,<br/>club, player"]
+        DR["Director<br/>puts it on air"]
+        FND["Azure AI Foundry<br/>gpt-4.1-mini writes the line<br/>prompt limited to the Fact<br/>offline narrator as fallback"]
+        SP --> AN --> EX --> VF
+        VF -- "pass" --> PZ --> DR
+        VF -- "reject: rewrite" --> EX
+        EX <-. "facts in, line out" .-> FND
+    end
+
+    subgraph OUT["4  RENDER  +  5  PERSONALIZE"]
+        direction TB
+        UI["Broadcast UI<br/>live SSE feed, persona tabs,<br/>evidence under every line"]
+        OV["Overlay packets, JSON<br/>timed, typed, evidence IDs<br/>and spelled-out evidence"]
+    end
+
+    ACA["Deployed on Azure Container Apps<br/>FastAPI service, one container"]
+
+    EV --> ST
+    DET --> SP
+    DR --> UI
+    DR --> OV
+    OUT -. "hosted on" .- ACA
+
+    classDef ingest fill:#FFF4E0,stroke:#E69A1F,color:#5A3A00,stroke-width:1.5px;
+    classDef engine fill:#E7F3FF,stroke:#2F80ED,color:#0B3D6B,stroke-width:1.5px;
+    classDef agent  fill:#F3EBFF,stroke:#8E5AE8,color:#3B1A6B,stroke-width:1.5px;
+    classDef gate   fill:#1F8A4C,stroke:#0F5E31,color:#FFFFFF,stroke-width:2px,font-weight:bold;
+    classDef output fill:#E8FAF0,stroke:#27AE60,color:#0D4D27,stroke-width:1.5px;
+    classDef cloud  fill:#DCEBFF,stroke:#0078D4,color:#003B73,stroke-width:2px;
+    class GEN,EV ingest;
+    class ST,IDX,ML,DET engine;
+    class SP,AN,EX,PZ,DR agent;
+    class VF gate;
+    class UI,OV output;
+    class FND,ACA cloud;
+
+    style IN   fill:#FFFBF2,stroke:#E69A1F,stroke-width:2px
+    style ENG  fill:#F4F9FF,stroke:#2F80ED,stroke-width:2px
+    style CREW fill:#F9F5FF,stroke:#8E5AE8,stroke-width:2px
+    style OUT  fill:#F2FCF6,stroke:#27AE60,stroke-width:2px

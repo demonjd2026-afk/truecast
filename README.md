@@ -1,5 +1,4 @@
-<h1 align="center">Truecast</h1>
-<p align="center"><strong>Match intelligence you can prove.</strong></p>
+<p align="center"><img src="docs/banner.svg" alt="Truecast - match intelligence you can prove" width="100%"></p>
 <p align="center">
   <img alt="Python 3.11+" src="https://img.shields.io/badge/python-3.11%2B-blue">
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green">
@@ -60,51 +59,9 @@ their event IDs; six agents turn a Fact into a line that must get past the
 overlay packet. Azure AI Foundry writes the words; Azure Container Apps hosts
 the service.
 
-```mermaid
-flowchart TB
-    subgraph IN["① INGEST — generator/"]
-        direction LR
-        GEN["Synthetic match generator<br/>fictional clubs · seeded · reproducible"] --> EV["Event stream<br/>pass · carry · shot · goal · tackle · pressure"]
-    end
+<p align="center"><img src="docs/architecture.png" alt="Truecast architecture: ingest, interpret, explain (six agents with the Verifier gate), render and personalize, on Azure AI Foundry and Azure Container Apps" width="100%"></p>
 
-    subgraph ENG["② INTERPRET — engine/ + ml/"]
-        direction LR
-        ST["Live match state<br/>score · possession · shots · distances"]
-        IDX["Explainability indices<br/>momentum · control vs chaos · pressure · tempo"]
-        ML["Trained models (scikit-learn → JSON)<br/>xG per shot · 3-way win probability"]
-        DET["Moment detector<br/>emits a <b>Fact</b> + the event IDs behind it"]
-        ST --> IDX --> DET
-        ST --> ML --> DET
-    end
-
-    subgraph CREW["③ EXPLAIN — agents/ · six agents on one shared blackboard"]
-        direction LR
-        SP["Spotter<br/>worth airing?"] --> AN["Analyst<br/>attaches exact numbers"] --> EX["Explainer<br/>writes the line"] --> VF{"VERIFIER<br/>every number and name<br/>traceable to the cited events?"}
-        VF -- "✓ pass" --> PZ["Personalizer<br/>analyst · casual · club · player"] --> DR["Director<br/>puts it on air"]
-        VF -- "✗ reject → rewrite" --> EX
-    end
-
-    subgraph OUT["④ RENDER + ⑤ PERSONALIZE — api/ + web/ + overlay/"]
-        direction LR
-        UI["Broadcast UI<br/>live SSE feed · persona tabs · evidence under every line"]
-        OV["Overlay packets (JSON)<br/>timed · typed · evidence IDs + spelled-out evidence"]
-    end
-
-    FND["☁ Azure AI Foundry<br/>gpt-4.1-mini writes the line<br/>(prompt limited to the Fact; offline narrator as fallback)"]
-    ACA["☁ Azure Container Apps<br/>hosts the FastAPI service in one container"]
-
-    EV --> ST
-    DET --> SP
-    DR --> UI
-    DR --> OV
-    EX <-.-> FND
-    OUT -.- ACA
-
-    classDef gate fill:#1f6f4a,stroke:#2ecc71,color:#fff,font-weight:bold;
-    classDef cloud fill:#e8f1fb,stroke:#0078d4,color:#0b3d6b;
-    class VF gate;
-    class FND,ACA cloud;
-```
+<p align="center"><sub>Colour key: orange = data in · blue = engine and models · purple = agent crew · green diamond = the Verifier gate · light blue = Azure · green = what leaves the system. Source: <a href="docs/architecture.mmd"><code>docs/architecture.mmd</code></a>.</sub></p>
 
 The brief asks for one pipeline with five stages. Truecast maps onto them
 directly:
