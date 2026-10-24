@@ -5,6 +5,10 @@ synthetic events go in; verified, personalised, broadcast-ready match
 intelligence comes out, in two forms: human-readable lines for each audience and
 machine-readable overlay packets for a rendering partner.
 
+<p align="center"><img src="docs/architecture.png" alt="Truecast architecture" width="100%"></p>
+
+The same flow, condensed (source for the picture: `docs/architecture.mmd`):
+
 ```
 events ─▶ engine (state + indices) ─▶ moment detection (Facts)
                                             │
@@ -37,7 +41,8 @@ and checked *against* their evidence, rather than generated freely and trusted.
 
 `state.py` ingests events incrementally and maintains team tallies, per-player
 stats, possession time, and off-ball distance (a steady per-player baseline on
-top of on-ball movement, so players reach realistic ~10–11 km totals).
+top of on-ball movement, so players reach realistic ~10–11 km totals). It also
+keeps every event by ID so cited evidence can be described back to the viewer.
 
 `indices.py` computes the explainability indices over a rolling 150-second
 window:
@@ -86,8 +91,10 @@ The Verifier builds an allow-list and rejects anything outside it:
 Any number or name in a line that falls outside the allow-list is an unsupported
 claim and the line is rejected. This is what makes output safe for a live feed:
 an invented stat never reaches air, whether it came from a template bug or a
-drifting model. Three unit tests pin this down — an invented number, an invented
-stat, and a wrong player are each rejected, while scorelines and clocks are not.
+drifting model. `tests/test_verifier.py` pins this down: an unsupported number
+(a sprint speed that appears nowhere in the data) and a roster player who was
+not part of the moment are each rejected; the scoreline and clock are not
+falsely flagged; and a rejection is counted and recovered from.
 
 ### Failure recovery
 
@@ -132,10 +139,20 @@ event IDs, and a verified flag. A rendering partner maps `template` to its own
 graphics and picks the variant for each viewer's chosen mode. `GET /api/overlays`
 exports the full timeline.
 
+Evidence travels in two forms. `evidence` is the list of event IDs the Fact
+cites. `evidence_detail` is those same events spelled out, in the same order:
+type, clock, team, player, outcome and (for shots and goals) the model xG. The
+engine keeps every event it has seen by ID (`MatchState.events`) and
+`describe_event()` builds each record, so the proof behind a line can be read
+without a lookup. The feed entry the UI receives carries the same two fields;
+the **evidence** toggle under every line renders `evidence_detail`.
+
 ## Personalization (`personas.py`)
 
-Analyst and casual are always produced for the live feed; club-focused (per team)
-and player-focused variants are rendered on demand. Player focus also filters the
+Analyst and casual are the default personas. The API server adds both clubs'
+supporter personas to the crew, so the live feed carries four variants per
+moment and the UI can switch between them instantly. Player-focused variants are
+rendered on demand through `GET /api/personalize`. Player focus also filters the
 feed to a chosen player — the "follow one player through the match" mode.
 
 ## API (`api/server.py`)

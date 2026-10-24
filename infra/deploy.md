@@ -18,7 +18,7 @@ az acr build -r <registry> -t truecast:latest .
 
 ## 2. (Optional) Provision an Azure AI Foundry model
 
-In the Azure AI Foundry portal, deploy a chat model (e.g. `gpt-4o-mini`) and
+In the Azure AI Foundry portal, deploy a chat model (`gpt-4.1-mini` is what the live demo uses) and
 copy its endpoint and key. Skip this to run the deterministic narrator.
 
 ## 3. Deploy the infrastructure

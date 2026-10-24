@@ -17,26 +17,26 @@ step beside it.
 ## 1. Create a resource group
 
 ```bash
-az group create -n truecast-rg -l eastus
+az group create -n rg-truecast -l eastus
 ```
 
 ## 2. Create the AI Foundry resource and deploy a chat model
 
 **Portal (recommended):**
 1. Open https://ai.azure.com → create a project (this provisions the AI Foundry resource).
-2. Go to **Models + endpoints → Deploy model → gpt-4o-mini** (or gpt-4o).
-3. Name the deployment `gpt-4o-mini`.
+2. Go to **Models + endpoints → Deploy model → gpt-4.1-mini**.
+3. Name the deployment `gpt-4.1-mini`.
 
 **CLI (alternative):**
 ```bash
 az cognitiveservices account create \
-  -n truecast-foundry -g truecast-rg -l eastus \
+  -n truecast-foundry -g rg-truecast -l eastus \
   --kind AIServices --sku S0 --yes
 
 az cognitiveservices account deployment create \
-  -n truecast-foundry -g truecast-rg \
-  --deployment-name gpt-4o-mini \
-  --model-name gpt-4o-mini --model-version "2024-07-18" \
+  -n truecast-foundry -g rg-truecast \
+  --deployment-name gpt-4.1-mini \
+  --model-name gpt-4.1-mini --model-version "2025-04-14" \
   --model-format OpenAI --sku-capacity 10 --sku-name Standard
 ```
 
@@ -44,11 +44,11 @@ az cognitiveservices account deployment create \
 
 ```bash
 az cognitiveservices account show \
-  -n truecast-foundry -g truecast-rg \
+  -n truecast-foundry -g rg-truecast \
   --query properties.endpoint -o tsv
 
 az cognitiveservices account keys list \
-  -n truecast-foundry -g truecast-rg \
+  -n truecast-foundry -g rg-truecast \
   --query key1 -o tsv
 ```
 
@@ -65,7 +65,7 @@ Fill in `.env`:
 ```
 AZURE_AI_FOUNDRY_ENDPOINT=https://truecast-foundry.openai.azure.com
 AZURE_AI_FOUNDRY_API_KEY=<key1>
-AZURE_AI_FOUNDRY_DEPLOYMENT=gpt-4o-mini
+AZURE_AI_FOUNDRY_DEPLOYMENT=gpt-4.1-mini
 AZURE_AI_FOUNDRY_API_VERSION=2024-10-21
 ```
 
@@ -86,7 +86,7 @@ Expected:
 ```
 configured mode: foundry
 endpoint:   https://truecast-foundry.openai.azure.com
-deployment: gpt-4o-mini
+deployment: gpt-4.1-mini
 probe:      OK — model responded ('OK')
 ```
 
@@ -102,7 +102,7 @@ truecast serve
 With Foundry on, the Explainer's lines come from the model, but the Verifier
 rebuilds its allow-list from the event log and rejects any line that adds a
 number or a player the data doesn't support — the rejected line is rewritten.
-Watch the **Rewritten** / **Blocked** counters in the Control Room panel: with a
+Watch the **Rewritten** / **Blocked** counters in the Production panel: with a
 live model they will occasionally tick up, which is the guardrail doing its job.
 
 ## Deploy the whole app to Azure

@@ -10,7 +10,7 @@ partner, and a different telling of the same match for every kind of viewer.
 
 What sets it apart is that it is **evidence-grounded**. A crew of six agents
 produces every line, and a dedicated Verifier agent checks each line against the
-event log before it airs — rejecting any invented number, stat, or player. A
+event log before it airs — rejecting any number or player name it cannot trace to the cited events. A
 broadcaster can automate commentary graphics without risking a hallucinated stat
 going out live.
 
@@ -46,13 +46,13 @@ Verifier→Explainer rewrite path for failure recovery.
 - Real-time match intelligence: xG, possession, pass accuracy, player speed and
   distance, plus momentum, control-vs-chaos, pressure, and tempo indices.
 - Narrative generation: key moments, player context, milestones, and recaps.
-- Explainability: every index and line is traceable to its events.
+- Explainability: every line carries the event IDs behind it, spelled out (type, time, player, xG) in the UI and in every overlay packet.
 - Data innovation: a seeded, reproducible synthetic match generator.
 - Personalization: analyst, casual, club, and player-focus experiences from one feed.
 
 ## Status
 
-Fully working end-to-end offline; Foundry-ready; 33 tests green, including tests
+Fully working end-to-end offline; Foundry-ready; 39 tests green, including tests
 that prove the Verifier blocks hallucinated numbers and wrong players, and that
 the Foundry HTTP path works against a mock endpoint. All data synthetic; no club
 trademarks used.

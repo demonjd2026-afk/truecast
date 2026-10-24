@@ -21,7 +21,7 @@ param foundryEndpoint string = ''
 param foundryApiKey string = ''
 
 @description('Foundry chat deployment name')
-param foundryDeployment string = 'gpt-4o-mini'
+param foundryDeployment string = 'gpt-4.1-mini'
 
 @description('Container registry login server, e.g. myreg.azurecr.io (blank for a public image)')
 param registryServer string = ''
