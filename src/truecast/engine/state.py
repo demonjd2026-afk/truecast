@@ -75,6 +75,10 @@ class MatchState:
         # Shot map + per-shot model xG (keyed by shot event id).
         self.shots: list[dict] = []
         self._shot_xg: dict[str, float] = {}
+        # Every event seen so far, by id, so a cited evidence id can be shown
+        # as the concrete event it names (who, what, when) rather than a bare
+        # reference. A match is a few thousand small dataclasses: cheap to keep.
+        self.events: dict[str, Event] = {}
         # Off-ball running: a steady baseline so players reach realistic
         # season-like distances (~10-11 km) on top of on-ball movement.
         import random as _r
@@ -155,6 +159,30 @@ class MatchState:
 
         self.idx.update(ev, now)
         self.last_event = ev
+        self.events[ev.event_id] = ev
+
+    def describe_event(self, event_id: str) -> dict:
+        """A compact, human-readable record of one evidence event.
+
+        Only fields the event actually carries are filled in; an id the state
+        has not seen yields a record with just the id, so callers can always
+        render something without guessing.
+        """
+        ev = self.events.get(event_id)
+        if ev is None:
+            return {"event_id": event_id}
+        out: dict = {"event_id": event_id, "type": ev.type, "clock": ev.clock_label}
+        if ev.team_id in self.teams:
+            out["team"] = self.meta.team(ev.team_id).short_name
+        ps = self.players.get(ev.player_id) if ev.player_id else None
+        if ps:
+            out["player"] = ps.name
+        if ev.outcome:
+            out["outcome"] = ev.outcome.replace("_", " ")
+        xg = ev.detail.get("xg")
+        if xg is not None and ev.type in ("shot", "goal"):
+            out["xg"] = round(float(xg), 3)
+        return out
 
     def _model_xg(self, ev: Event) -> float:
         dist, angle = shot_geometry(ev.x or 0.0, ev.y or 34.0)

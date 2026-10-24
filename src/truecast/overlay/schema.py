@@ -39,6 +39,9 @@ class OverlayPacket:
     data: dict[str, Any]
     evidence: list[str]                 # event ids backing this overlay
     verified: bool
+    # The cited events spelled out (type, clock, player, outcome, xG) so the
+    # packet is self-explanatory without a lookup against the event log.
+    evidence_detail: list[dict] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return asdict(self)

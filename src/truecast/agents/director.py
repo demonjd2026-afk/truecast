@@ -25,6 +25,7 @@ class Director(Agent):
         fact = item.fact
         var_map = {v.persona: v.text for v in variants}
         all_verified = all(v.verified for v in variants)
+        evidence_detail = [self.bb.state.describe_event(i) for i in packet.evidence]
 
         from ..overlay.schema import TEMPLATE_BY_KIND
         overlay = OverlayPacket(
@@ -41,6 +42,7 @@ class Director(Agent):
             data=packet.numbers,
             evidence=packet.evidence,
             verified=all_verified,
+            evidence_detail=evidence_detail,
         )
         self.bb.overlays.append(overlay.to_dict())
 
@@ -56,6 +58,7 @@ class Director(Agent):
             "text": air_text,
             "variants": var_map,
             "evidence": packet.evidence,
+            "evidence_detail": evidence_detail,
             "verified": all_verified,
             "team_id": fact.subject_team,
             "player_id": fact.subject_player,

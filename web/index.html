@@ -187,6 +187,13 @@
   .evbtn:hover{color:var(--ink);border-color:var(--line)}
   .evlist{margin-top:6px;font-size:11px;color:var(--muted);background:#0a0f1b;border:1px solid var(--line-soft);
     border-radius:6px;padding:7px;display:none}
+  .evlist .evcap{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
+  .evrow{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;padding:3px 0;border-top:1px solid var(--line-soft)}
+  .evrow:first-of-type{border-top:0}
+  .evrow .evid{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--dim);font-size:10.5px}
+  .evrow .evtype{color:var(--ink);font-weight:600;text-transform:capitalize}
+  .evrow .evwho{color:var(--ink)}
+  .evrow .evnum{color:var(--signal)}
 
   /* production / crew */
   .crew{display:flex;flex-direction:column;gap:6px}
@@ -415,6 +422,25 @@ function pkey(){ if(!S.meta)return"analyst";
   return S.persona; }
 function lineFor(it){const k=pkey();return it.variants[k]||it.variants.analyst||it.text;}
 
+// One row per cited event: what it was, when, who, and the figures the line
+// used — so the proof behind a line is readable, not just a list of ids.
+function esc(x){return String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function evidenceHTML(it){
+  const det=it.evidence_detail&&it.evidence_detail.length?it.evidence_detail
+    :it.evidence.map(id=>({event_id:id}));
+  const rows=det.map(d=>{
+    let h=`<span class="evid">${esc(d.event_id)}</span>`;
+    if(d.type)h+=`<span class="evtype">${esc(d.type.replace('_',' '))}</span>`;
+    if(d.clock)h+=`<span class="num">${esc(d.clock)}</span>`;
+    const who=[d.player,d.team].filter(Boolean).join(' · ');
+    if(who)h+=`<span class="evwho">${esc(who)}</span>`;
+    if(d.outcome)h+=`<span>${esc(d.outcome)}</span>`;
+    if(d.xg!==undefined)h+=`<span class="evnum num">xG ${esc(d.xg)}</span>`;
+    return `<div class="evrow">${h}</div>`;
+  }).join('');
+  return `<div class="evcap">Evidence · ${det.length} event${det.length===1?'':'s'} from the match log</div>${rows}`;
+}
+
 function renderFeed(){
   const f=$('#feed');f.innerHTML="";
   const items=S.pfocus?S.items.filter(i=>i.player_id===S.pfocus):S.items;
@@ -426,7 +452,7 @@ function renderFeed(){
       <div class="txt">${lineFor(it)}</div>
       <div class="foot"><span class="vok">◆ verified</span>
       <button class="evbtn">evidence (${it.evidence.length})</button></div>
-      <div class="evlist">events: ${it.evidence.join(', ')}</div>`;
+      <div class="evlist">${evidenceHTML(it)}</div>`;
     const b=el.querySelector('.evbtn'),l=el.querySelector('.evlist');
     b.onclick=()=>{l.style.display=l.style.display==='block'?'none':'block';};
     f.appendChild(el);

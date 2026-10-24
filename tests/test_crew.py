@@ -65,3 +65,22 @@ def test_recap_structure():
     # recap moments ordered by clock
     clocks = [m["clock"] for m in recap["moments"]]
     assert clocks == sorted(clocks)
+
+
+def test_evidence_is_spelled_out():
+    """Every cited event id resolves to a readable record, and a goal's
+    evidence names the scorer and the xG figure the line itself quotes."""
+    cr = _full()
+    for f in cr.bb.feed:
+        assert [d["event_id"] for d in f["evidence_detail"]] == f["evidence"]
+        for d in f["evidence_detail"]:
+            assert d["type"] and d["clock"]
+    goals = [f for f in cr.bb.feed if f["kind"] == "goal"]
+    assert goals
+    for g in goals:
+        goal_ev = next(d for d in g["evidence_detail"] if d["type"] == "goal")
+        assert goal_ev["player"] in g["text"]
+        assert str(goal_ev["xg"]) in g["text"]
+    # Overlay packets carry the same detail for the rendering partner.
+    for o in cr.bb.overlays:
+        assert [d["event_id"] for d in o["evidence_detail"]] == o["evidence"]

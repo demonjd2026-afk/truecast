@@ -3,7 +3,7 @@
 <p align="center">
   <img alt="Python 3.11+" src="https://img.shields.io/badge/python-3.11%2B-blue">
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-38%20passing-brightgreen">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-39%20passing-brightgreen">
 </p>
 
 Truecast turns a stream of synthetic football events into broadcast-ready match
@@ -37,13 +37,74 @@ A real moment from match #21, and the events behind it:
 
 ```
 04:55  ✓  [goal]  GOAL. Kai Enright finds the net for Kingsmoor City at 04:55.
-                  It's KGS 1-0 STB. That chance was worth 0.494 xG.
-       └─ evidence: e00147 (goal), e00146 (the shot)   → every figure traceable
+                  It's KGS 1-0 STB. That chance was worth 0.34 xG.
+       └─ evidence (2 events from the match log)
+            e00147  goal   04:55  Kai Enright · KGS             xG 0.34
+            e00146  shot   04:54  Kai Enright · KGS  on target  xG 0.34
 ```
+
+Click **evidence** under any line in the UI and this is what opens: the scorer,
+the time and the xG the line quotes are all read straight off the cited events.
+The same spelled-out evidence travels inside every overlay packet
+(`evidence_detail`), so a rendering partner never needs a lookup to see why a
+graphic is justified.
 
 ---
 
-## Pipeline
+## Architecture
+
+One pipeline, five stages, read top to bottom. Synthetic events become live
+state and metrics; the engine turns notable moments into **Facts** that carry
+their event IDs; six agents turn a Fact into a line that must get past the
+**Verifier** before it airs; the Director delivers it to the UI and as an
+overlay packet. Azure AI Foundry writes the words; Azure Container Apps hosts
+the service.
+
+```mermaid
+flowchart TB
+    subgraph IN["① INGEST — generator/"]
+        direction LR
+        GEN["Synthetic match generator<br/>fictional clubs · seeded · reproducible"] --> EV["Event stream<br/>pass · carry · shot · goal · tackle · pressure"]
+    end
+
+    subgraph ENG["② INTERPRET — engine/ + ml/"]
+        direction LR
+        ST["Live match state<br/>score · possession · shots · distances"]
+        IDX["Explainability indices<br/>momentum · control vs chaos · pressure · tempo"]
+        ML["Trained models (scikit-learn → JSON)<br/>xG per shot · 3-way win probability"]
+        DET["Moment detector<br/>emits a <b>Fact</b> + the event IDs behind it"]
+        ST --> IDX --> DET
+        ST --> ML --> DET
+    end
+
+    subgraph CREW["③ EXPLAIN — agents/ · six agents on one shared blackboard"]
+        direction LR
+        SP["Spotter<br/>worth airing?"] --> AN["Analyst<br/>attaches exact numbers"] --> EX["Explainer<br/>writes the line"] --> VF{"VERIFIER<br/>every number and name<br/>traceable to the cited events?"}
+        VF -- "✓ pass" --> PZ["Personalizer<br/>analyst · casual · club · player"] --> DR["Director<br/>puts it on air"]
+        VF -- "✗ reject → rewrite" --> EX
+    end
+
+    subgraph OUT["④ RENDER + ⑤ PERSONALIZE — api/ + web/ + overlay/"]
+        direction LR
+        UI["Broadcast UI<br/>live SSE feed · persona tabs · evidence under every line"]
+        OV["Overlay packets (JSON)<br/>timed · typed · evidence IDs + spelled-out evidence"]
+    end
+
+    FND["☁ Azure AI Foundry<br/>gpt-4.1-mini writes the line<br/>(prompt limited to the Fact; offline narrator as fallback)"]
+    ACA["☁ Azure Container Apps<br/>hosts the FastAPI service in one container"]
+
+    EV --> ST
+    DET --> SP
+    DR --> UI
+    DR --> OV
+    EX <-.-> FND
+    OUT -.- ACA
+
+    classDef gate fill:#1f6f4a,stroke:#2ecc71,color:#fff,font-weight:bold;
+    classDef cloud fill:#e8f1fb,stroke:#0078d4,color:#0b3d6b;
+    class VF gate;
+    class FND,ACA cloud;
+```
 
 The brief asks for one pipeline with five stages. Truecast maps onto them
 directly:
@@ -113,7 +174,7 @@ truecast generate --seed 21    # write raw synthetic match data to data/
 |----------|---------|
 | `GET /api/meta?seed=21` | squads, colours, narrator mode |
 | `GET /api/stream?seed=21&speed=60` | SSE live feed: scoreboard ticks, aired lines, overlays |
-| `GET /api/overlays?seed=21` | full machine-readable overlay timeline (rendering-partner export) |
+| `GET /api/overlays?seed=21` | full machine-readable overlay timeline (rendering-partner export); each packet carries `evidence` (event IDs) and `evidence_detail` (those events spelled out) |
 | `GET /api/personalize?seed=21&overlay_id=ov0002&mode=club&team_id=KGS` | re-render one moment for a viewer |
 | `GET /api/recap?seed=21` | end-of-match recap |
 | `GET /api/models` | trained-model provenance + held-out metrics |
@@ -167,7 +228,7 @@ matches held out from training (split by match, never by row).
 ## Tests
 
 ```bash
-pytest          # 38 tests
+pytest          # 39 tests
 ```
 
 Covers the generator (reproducibility, schema, xG geometry), the engine
