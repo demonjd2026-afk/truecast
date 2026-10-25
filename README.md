@@ -19,7 +19,7 @@ before it airs. Nothing reaches the screen that the data cannot back.
 > trademarks are used.
 
 **Live app:** <https://truecast.proudplant-2d596e2b.eastus2.azurecontainerapps.io>
-· **Demo video:** [docs/truecast-demo.mp4](docs/truecast-demo.mp4) (2 min)
+· **Demo video:** [docs/truecast-demo.mp4](docs/truecast-demo.mp4) (1:55)
 · **Docs:** [Architecture](ARCHITECTURE.md) · [Pitch](PITCH.md) · [Azure setup](AZURE_SETUP.md)
 
 ---
@@ -30,7 +30,7 @@ before it airs. Nothing reaches the screen that the data cannot back.
   <a href="docs/truecast-demo.mp4"><img src="docs/demo-thumb.png" alt="Truecast demo video: a goal airs, the evidence behind it is opened, the six-agent crew and the Verifier counters, Azure AI Foundry and Container Apps" width="100%"></a>
 </p>
 
-Two minutes, recorded against the live Azure deployment with the Foundry
+Under two minutes, recorded against the live Azure deployment with the Foundry
 narrator on: a goal airs, the evidence behind it is opened, the same moment is
 retold for three audiences, the six agents and the Verifier's counters, the
 trained models, and the machine-readable overlay packets.

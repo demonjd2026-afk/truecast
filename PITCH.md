@@ -53,7 +53,7 @@ Verifier→Explainer rewrite path for failure recovery.
 ## Demo
 
 - Live app: <https://truecast.proudplant-2d596e2b.eastus2.azurecontainerapps.io>
-- Video (2 min): [`docs/truecast-demo.mp4`](docs/truecast-demo.mp4)
+- Video (1:55): [`docs/truecast-demo.mp4`](docs/truecast-demo.mp4)
 - Code: <https://github.com/demonjd2026-afk/truecast>
 
 ## Status
