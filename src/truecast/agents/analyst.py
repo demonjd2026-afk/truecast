@@ -33,7 +33,8 @@ class Analyst(Agent):
             numbers["player_distance_km"] = round(ps.distance_m / 1000.0, 1)
             numbers["player_top_speed_kmh"] = round(ps.top_speed_ms * 3.6, 1)
 
-        packet = AnalysisPacket(fact=fact, numbers=numbers, evidence=list(fact.evidence))
+        packet = AnalysisPacket(fact=fact, numbers=numbers, evidence=list(fact.evidence),
+                                score_line=self.bb.score_line())
         self.bb.analyses[fact.fact_id] = packet
         self.bb.handoff(self.name, "Explainer", f"packet for {fact.kind}", fact.fact_id)
         return packet

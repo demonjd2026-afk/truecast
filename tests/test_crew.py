@@ -84,3 +84,22 @@ def test_evidence_is_spelled_out():
     # Overlay packets carry the same detail for the rendering partner.
     for o in cr.bb.overlays:
         assert [d["event_id"] for d in o["evidence_detail"]] == o["evidence"]
+
+
+def test_goal_context_follows_the_scoring_team():
+    from truecast.models import Fact
+
+    cr = Truecast(generate_match(21)[0])
+    home, away = cr.state.home_id, cr.state.away_id
+
+    def tag(scorer, home_goals, away_goals):
+        cr.state.teams[home].goals = home_goals
+        cr.state.teams[away].goals = away_goals
+        fact = Fact(fact_id="t", kind="goal", subject_team=scorer, subject_player=None,
+                    clock_label="10:00", text="", evidence=[], importance=0.98)
+        return cr.spotter.assess(fact).context
+
+    assert tag(home, 1, 0) == "lead change"      # 0-0 -> 1-0
+    assert tag(away, 1, 1) == "equaliser"        # 1-0 -> 1-1
+    assert tag(away, 2, 1) == ""                 # 2-0 -> 2-1 only narrows the gap
+    assert tag(home, 3, 1) == ""                 # 2-1 -> 3-1 extends the lead

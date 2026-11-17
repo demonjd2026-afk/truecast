@@ -191,8 +191,10 @@ def personalize(seed: int = DEFAULT_SEED, overlay_id: str = "", mode: str = "clu
     else:
         persona = club_persona(cr.bb.meta, team_id or packet.fact.subject_team or cr.bb.meta.home.team_id)
 
-    line = cr.explainer.recover(persona, packet, cr.bb.score_line())
-    res = cr.verifier.verify(line, packet, cr.bb.score_line())
+    # The replay has run to full time; use the score as it stood at the moment.
+    score_line = packet.score_line or cr.bb.score_line()
+    line = cr.explainer.recover(persona, packet, score_line)
+    res = cr.verifier.verify(line, packet, score_line)
     return JSONResponse({
         "overlay_id": overlay_id, "persona": persona.label,
         "text": line, "verified": res.ok,

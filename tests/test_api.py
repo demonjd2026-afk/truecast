@@ -34,6 +34,9 @@ def test_personalize():
     body = r.json()
     assert body["verified"] is True
     assert body["text"]
+    # The re-rendered line quotes the score at the moment, not the final score.
+    assert f"{goal['data']['score_home']}-{goal['data']['score_away']}" in body["text"]
+    assert "2-3" not in body["text"]
 
 
 def test_index_served():

@@ -26,13 +26,17 @@ class Spotter(Agent):
         salience = fact.importance
         context_bits: list[str] = []
 
-        h, a = self.bb.state.score()
         if fact.kind == "goal":
-            if h == a:
+            # Score after the goal, from the scoring team's side.
+            h, a = self.bb.state.score()
+            mine, theirs = (h, a) if fact.subject_team == self.bb.state.home_id else (a, h)
+            if mine == theirs:
                 salience = min(1.0, salience + 0.02)
                 context_bits.append("equaliser")
-            elif abs(h - a) == 1:
-                context_bits.append("lead change" if fact.data.get("score_home") is not None else "")
+            elif mine - theirs == 1:
+                # Level before this goal, ahead after it. A goal that only
+                # narrows a deficit (2-0 to 2-1) gets no tag.
+                context_bits.append("lead change")
         if fact.kind in ("control_spell", "pressure_build", "milestone"):
             # These matter less when the game is wide open.
             if self.bb.state.idx.chaos() > 0.6:

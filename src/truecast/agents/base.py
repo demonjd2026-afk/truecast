@@ -44,6 +44,9 @@ class AnalysisPacket:
     fact: Fact
     numbers: dict[str, Any]
     evidence: list[str]
+    # The scoreline as it stood when the moment happened, so a line re-rendered
+    # later (e.g. /api/personalize after full time) still quotes the right score.
+    score_line: str = ""
 
 
 @dataclass

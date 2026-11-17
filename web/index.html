@@ -182,6 +182,7 @@
   .txt{line-height:1.5}
   .foot{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:11px;color:var(--dim)}
   .vok{color:var(--signal)}
+  .vbad{color:var(--amber)}
   .evbtn{cursor:pointer;color:var(--muted);background:#ffffff0a;border:1px solid var(--line-soft);
     border-radius:999px;padding:2px 9px;font-size:10.5px;letter-spacing:.02em}
   .evbtn:hover{color:var(--ink);border-color:var(--line)}
@@ -332,7 +333,7 @@
       </div>
       <div class="mon-cap" id="lower">
         <div class="l-top"><span class="l-kind" id="lkind">Awaiting kickoff</span><span class="ck num" id="lclock"></span>
-          <span class="l-ver">◆ evidence-verified</span></div>
+          <span class="l-ver" id="lver">◆ evidence-verified</span></div>
         <div class="l-head" id="lhead">Press ▶ Kick off to begin</div>
         <div class="l-sub" id="lsub">The latest on-air line and its evidence appear here.</div>
       </div>
@@ -450,7 +451,7 @@ function renderFeed(){
     el.innerHTML=`<div class="top"><span class="kind ${it.kind==='goal'?'goal':''}">${it.kind.replace('_',' ')}</span>
       <span class="ck num">${it.clock}</span>${it.context?`<span class="ctx">${it.context}</span>`:''}</div>
       <div class="txt">${lineFor(it)}</div>
-      <div class="foot"><span class="vok">◆ verified</span>
+      <div class="foot"><span class="${it.verified?'vok':'vbad'}">${it.verified?'◆ verified':'◇ not verified'}</span>
       <button class="evbtn">evidence (${it.evidence.length})</button></div>
       <div class="evlist">${evidenceHTML(it)}</div>`;
     const b=el.querySelector('.evbtn'),l=el.querySelector('.evlist');
@@ -478,6 +479,8 @@ function showLower(it){
   $('#lkind').textContent=it.kind.replace('_',' ');
   $('#lkind').style.background=colors[it.kind]||'#ffffff12';
   $('#lclock').textContent=it.clock;
+  $('#lver').textContent=it.verified?'◆ evidence-verified':'◇ not verified';
+  $('#lver').classList.toggle('vbad',!it.verified);
   // colour the subject (player or team) in headline + sub by its team colour,
   // for every moment kind — subject is the name after the "—" in the headline.
   let subjName=null,tid=null;

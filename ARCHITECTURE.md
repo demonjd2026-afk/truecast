@@ -5,22 +5,34 @@ synthetic events go in; verified, personalised, broadcast-ready match
 intelligence comes out, in two forms: human-readable lines for each audience and
 machine-readable overlay packets for a rendering partner.
 
-<p align="center"><img src="docs/architecture.png" alt="Truecast architecture" width="100%"></p>
+<p align="center"><img src="docs/architecture.png" alt="Truecast architecture: ingest and interpret feed Facts to a six-agent crew; the Personalizer runs an Explainer and Verifier loop per audience; the Director sends feed entries to the broadcast UI and overlay packets to a graphics partner" width="100%"></p>
 
-The same flow, condensed (source for the picture: `docs/architecture.mmd`):
+The same flow, condensed:
 
 ```
-events ─▶ engine (state + indices) ─▶ moment detection (Facts)
+events ─▶ engine (state + indices + models) ─▶ moment detection (Facts)
+                                                     │
+                                                     ▼
+          Spotter ▸ Analyst ▸ Personalizer ─┬─▶ Explainer ▸ Verifier ─┐   once per
+                                            │        ▲        │ reject │   audience
+                                            │        └────────┘        │
+                                            ◀──── verified variants ───┘
                                             │
                                             ▼
-                         Spotter ▸ Analyst ▸ Explainer ▸ Verifier
-                                            │                 │ reject ↺
-                                            ▼                 │
-                                     Personalizer ◀───────────┘
-                                            │
-                                            ▼
-                                        Director ─▶ feed + overlay packets
+                                        Director ─▶ feed entry + overlay packet
 ```
+
+## Contents
+
+1. [Data contract](#data-contract-modelspy)
+2. [Engine](#engine-engine)
+3. [The crew](#the-crew-agents): [the Verifier](#the-verifier-agentsverifierpy), [failure recovery](#failure-recovery), [Agent Framework mapping](#mapping-to-the-microsoft-agent-framework)
+4. [Narrative providers](#narrative-providers-llm)
+5. [Overlay packets](#overlay-packets-overlayschemapy)
+6. [Personalization](#personalization-personaspy)
+7. [API](#api-apiserverpy)
+8. [Trained models](#trained-models-ml)
+9. [Why multi-agent](#why-multi-agent)
 
 ## Data contract (`models.py`)
 
@@ -65,14 +77,18 @@ exactly one place.
 
 ## The crew (`agents/`)
 
-Each agent has one responsibility and shares the `Blackboard`:
+Each agent has one responsibility and shares the `Blackboard`. In the order
+they run for each Fact:
 
-1. **Spotter** — salience filtering and context (equaliser, lead change, quiet spell).
+1. **Spotter** — salience filtering (anything under 0.3 is dropped) and a context tag (equaliser, lead change).
 2. **Analyst** — attaches exact supporting numbers from live state; these become the Verifier's allow-list.
-3. **Explainer** — asks the active provider for a persona-shaped line; exposes a deterministic `recover()` path for rewrites.
-4. **Verifier** — see below.
-5. **Personalizer** — runs Explainer→Verifier once per persona, with the rewrite/recover loop.
-6. **Director** — selects the on-air line and emits the overlay packet.
+3. **Personalizer** — runs Explainer→Verifier once per persona, with the rewrite/recover loop (at most two rewrites).
+4. **Explainer** — asks the active provider for a persona-shaped line; exposes a deterministic `recover()` path for rewrites.
+5. **Verifier** — see below.
+6. **Director** — puts the analyst line on air by default and emits the overlay packet.
+
+The blackboard's trace records the Analyst → Explainer handoff, every
+Verifier → Explainer rejection and the Personalizer → Director handoff.
 
 `crew.py` wires them behind a single `ingest(event)` call and exposes
 `snapshot()` and `recap()`.
@@ -85,16 +101,24 @@ The Verifier builds an allow-list and rejects anything outside it:
   and scoreline, expanded with the transforms a line might legitimately use
   (1- and 2-dp rounding, integer, and fraction→percentage). A scoreline like
   `2-3` is tokenised as 2 and 3, never as 2 and −3.
-- **Names** — only the player and team names tied to this moment's Fact. A roster
-  player who was not part of the moment is flagged.
+- **Names** — a roster player named in full (first name and surname) must be a
+  player tied to this moment's Fact. A roster player who was not part of the
+  moment is flagged.
 
-Any number or name in a line that falls outside the allow-list is an unsupported
-claim and the line is rejected. This is what makes output safe for a live feed:
+Any number or roster player in a line that falls outside the allow-list is an
+unsupported claim and the line is rejected. This is what makes output safe for a live feed:
 an invented stat never reaches air, whether it came from a template bug or a
 drifting model. `tests/test_verifier.py` pins this down: an unsupported number
 (a sprint speed that appears nowhere in the data) and a roster player who was
 not part of the moment are each rejected; the scoreline and clock are not
 falsely flagged; and a rejection is counted and recovered from.
+
+The check is deliberately narrow. It does not look at team names, names that
+belong to neither squad, or a player referred to by surname only, and it
+confirms that a number exists in the allow-list, not that the line attaches it
+to the right thing. Wording with no number or name in it is not checked. The
+Foundry prompt asks the model to stay within the supplied facts, but these two
+checks are the part enforced in code.
 
 ### Failure recovery
 
@@ -158,9 +182,17 @@ feed to a chosen player — the "follow one player through the match" mode.
 ## API (`api/server.py`)
 
 FastAPI. `/api/stream` replays a match through the crew in accelerated real time
-and pushes server-sent events: periodic scoreboard/index snapshots, each aired
-line, and the overlay packet behind it. `/healthz` backs the container liveness
-and readiness probes.
+and pushes server-sent events: `meta` once, a `tick` snapshot (scoreboard,
+indices, win probability, shots) every match minute, an `air` event for each
+aired line with its variants and evidence, then `recap` and `done`. Overlay
+packets are not part of the stream; `/api/overlays` exports them for the whole
+match. `/api/personalize` re-renders one aired moment for a club or a player
+with the offline narrator and verifies it. `/healthz` backs the container
+liveness and readiness probes in the Bicep template.
+
+`/api/overlays`, `/api/recap` and `/api/personalize` need a fully replayed
+match, so a replay is computed once per seed and cached (eight seeds at most).
+The five featured seeds are replayed in a background thread at startup.
 
 ## Trained models (`ml/`)
 

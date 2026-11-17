@@ -58,7 +58,7 @@ Verifier→Explainer rewrite path for failure recovery.
 
 ## Status
 
-Fully working end-to-end offline; Foundry-ready; 39 tests green, including tests
+Fully working end-to-end offline; Foundry-ready; 40 tests green, including tests
 that prove the Verifier blocks hallucinated numbers and wrong players, and that
 the Foundry HTTP path works against a mock endpoint. All data synthetic; no club
 trademarks used.
